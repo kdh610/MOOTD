@@ -1,50 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.mainFragment">
 
 
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
-        android:layout_width="match_parent"
-        android:layout_height="480dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="123dp"
-        android:layout_marginBottom="89dp" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="68dp"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/bottomBtn"
         android:layout_width="match_parent"
         android:layout_height="90dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="101dp"
+        android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:orientation="horizontal">
-
-        <!-- 왼쪽 버튼 -->
-        <!--        <ImageButton-->
-        <!--            android:id="@+id/btnCreate"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:contentDescription="Create" />-->
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewFinder"
+        tools:layout_editor_absoluteX="0dp">
 
         <!-- 가운데 촬영 버튼 -->
-        <ImageButton
+        <Button
             android:id="@+id/btnCapture"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginHorizontal="32dp"
             android:background="@drawable/capture_button"
             android:contentDescription="Capture" />
-
-        <!-- 오른쪽 버튼 -->
-        <!--        <ImageButton-->
-        <!--            android:id="@+id/btnGuide"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:contentDescription="Guide" />-->
     </LinearLayout>
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
