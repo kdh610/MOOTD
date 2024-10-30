@@ -4,14 +4,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".fragment.mainFragment">
+    tools:context=".fragment.MainFragment">
+
+    <ImageButton
+        android:id="@+id/btnMap"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Map"
+        android:src="@drawable/map_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnSwitchCamera"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Switch Camera"
+        android:src="@drawable/switch_camera_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginTop="140dp"
         app:layout_constraintDimensionRatio="3:4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -31,11 +53,34 @@
 
         <!-- 가운데 촬영 버튼 -->
         <Button
+            android:id="@+id/btnGallery"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginHorizontal="32dp"
+            android:backgroundTint="@color/translate"
+            android:contentDescription="Gallery"
+            android:drawableTop="@drawable/gallery_button"
+            android:stateListAnimator="@null"
+            android:text="만들기" />
+
+        <ImageButton
             android:id="@+id/btnCapture"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginHorizontal="32dp"
             android:background="@drawable/capture_button"
             android:contentDescription="Capture" />
+
+        <Button
+            android:id="@+id/btnGuide"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginHorizontal="32dp"
+            android:backgroundTint="@color/translate"
+            android:drawableTop="@drawable/guide_button"
+            android:stateListAnimator="@null"
+            android:text="가이드"
+            android:contentDescription="Guide" />
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

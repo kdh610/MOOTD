@@ -3,7 +3,6 @@ package com.example.mootd.fragment
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,24 +17,24 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.fragment.findNavController
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentMainBinding
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-class mainFragment : Fragment() {
+class MainFragment : Fragment() {
 
     private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+
+    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
 
     override fun onCreateView(
@@ -57,6 +56,7 @@ class mainFragment : Fragment() {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         binding.btnCapture.setOnClickListener{takePhoto()}
+        binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
 
     }
 
@@ -84,7 +84,7 @@ class mainFragment : Fragment() {
             }
 
             imageCapture = ImageCapture.Builder().build()
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
@@ -96,29 +96,24 @@ class mainFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    private fun toggleCamera() {
+        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        } else {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        }
+        startCamera()
+    }
+
     private fun takePhoto() {
         // imageCapture 객체가 null인 경우 바로 return
         val imageCapture = imageCapture ?: return
 
-        // 파일 이름을 생성하고, MediaStore에 저장할 ContentValues를 설정
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/MOOTD")
-            }
-        }
+        // 임시 파일 생성
+        val photoFile = File(requireContext().cacheDir, "temp_photo.jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        // Fragment의 contentResolver를 사용하여 OutputFileOptions 설정
-        val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(
-                requireContext().contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            )
-            .build()
+
 
         // 사진 촬영 후 결과를 처리하는 리스너 설정
         imageCapture.takePicture(
@@ -130,9 +125,11 @@ class mainFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
+
+                    val bundle = Bundle().apply {
+                        putString("photoFilePath", photoFile.absolutePath)
+                    }
+                    findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
                 }
             }
         )
