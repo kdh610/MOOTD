@@ -34,6 +34,8 @@ class MainFragment : Fragment() {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
+    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -54,6 +56,7 @@ class MainFragment : Fragment() {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         binding.btnCapture.setOnClickListener{takePhoto()}
+        binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
 
     }
 
@@ -81,7 +84,7 @@ class MainFragment : Fragment() {
             }
 
             imageCapture = ImageCapture.Builder().build()
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
@@ -91,6 +94,15 @@ class MainFragment : Fragment() {
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun toggleCamera() {
+        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        } else {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        }
+        startCamera()
     }
 
     private fun takePhoto() {

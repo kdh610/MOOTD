@@ -6,6 +6,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.MainFragment">
 
+    <ImageButton
+        android:id="@+id/btnSwitchCamera"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Switch Camera"
+        android:src="@drawable/switch_camera_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
