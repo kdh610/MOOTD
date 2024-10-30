@@ -7,16 +7,29 @@
 
     <fragment
         android:id="@+id/mainFragment"
-        android:name="com.example.mootd.fragment.mainFragment"
+        android:name="com.example.mootd.fragment.MainFragment"
         android:label="fragment_main"
         tools:layout="@layout/fragment_main" >
         <action
             android:id="@+id/action_mainFragment_to_galleryFragment"
             app:destination="@id/galleryFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_pictureResultFragment"
+            app:destination="@id/pictureResultFragment" />
     </fragment>
     <fragment
         android:id="@+id/galleryFragment"
-        android:name="com.example.mootd.fragment.galleryFragment"
+        android:name="com.example.mootd.fragment.GalleryFragment"
         android:label="fragment_gallery"
         tools:layout="@layout/fragment_gallery" />
+
+    <fragment
+        android:id="@+id/pictureResultFragment"
+        android:name="com.example.mootd.fragment.PictureResultFragment"
+        android:label="fragment_picture_result"
+        tools:layout="@layout/fragment_picture_result">
+        <argument
+            android:name="photoFilePath"
+            app:argType="string" />
+    </fragment>
 </navigation>
