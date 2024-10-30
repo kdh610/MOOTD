@@ -1,10 +1,12 @@
 package com.example.mootd.fragment
 
 import android.content.ContentValues
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -13,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.navigation.fragment.findNavController
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentPictureResultBinding
@@ -42,9 +45,6 @@ class PictureResultFragment : Fragment() {
 
         photoFilePath = arguments?.getString("photoFilePath") ?: ""
 
-//        val bitmap = BitmapFactory.decodeFile(photoFilePath)
-//        binding.photoPreview.setImageBitmap(bitmap)
-
         val rotatedBitmap = getRotatedBitmap(photoFilePath)
         binding.photoPreview.setImageBitmap(rotatedBitmap)
 
@@ -52,6 +52,7 @@ class PictureResultFragment : Fragment() {
         binding.btnBack.setOnClickListener{
             findNavController().popBackStack()
         }
+        binding.btnShare.setOnClickListener{ sharePhoto() }
     }
 
     private fun getRotatedBitmap(filePath: String): Bitmap {
@@ -105,6 +106,29 @@ class PictureResultFragment : Fragment() {
         }
 
     }
+
+    private fun sharePhoto() {
+        val photoFile = File(photoFilePath)
+        val uri: Uri = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                photoFile
+            )
+        } else {
+            Uri.fromFile(photoFile)
+        }
+
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "image/jpeg"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        startActivity(Intent.createChooser(shareIntent, "사진 공유하기"))
+    }
+
     private fun deleteTempFile() {
         val tempFile = File(photoFilePath)
         if (tempFile.exists()) {
