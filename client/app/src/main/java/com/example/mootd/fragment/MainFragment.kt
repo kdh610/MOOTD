@@ -62,6 +62,9 @@ class MainFragment : Fragment() {
 
         binding.btnCapture.setOnClickListener{takePhoto()}
         binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
+        binding.btnGallery.setOnClickListener{
+            findNavController().navigate(R.id.action_mainFragment_to_galleryFragment)
+        }
 
     }
 
