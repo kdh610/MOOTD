@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -42,12 +43,10 @@ class GalleryFragment : Fragment() {
         setupRecyclerView()
 
         if (hasStoragePermission()) {
-            setupRecyclerView()
             loadGalleryImages()
         } else {
             requestStoragePermission()
         }
-
         binding.backButton.setOnClickListener{
             findNavController().popBackStack()
         }
@@ -77,7 +76,14 @@ class GalleryFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        galleryAdapter = GalleryAdapter(imageList)
+        galleryAdapter = GalleryAdapter(imageList) { imagePath ->
+            // 클릭한 이미지 경로를 PictureDetailFragment로 전달하기 위해 Bundle 사용
+            val bundle = Bundle().apply {
+                putString("imagePath", imagePath)
+            }
+            findNavController().navigate(R.id.action_galleryFragment_to_pictureDetailFragment, bundle)
+        }
+
         binding.recyclerView.apply {
             layoutManager = GridLayoutManager(context, 3)
             adapter = galleryAdapter
@@ -126,6 +132,8 @@ class GalleryFragment : Fragment() {
     }
 
     private fun loadGalleryImages() {
+        imageList.clear()
+
         val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA)
         val cursor = requireContext().contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -145,11 +153,31 @@ class GalleryFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        // RecyclerView가 화면에 표시될 때 강제로 레이아웃을 갱신하여 비율 유지
+        binding.recyclerView.viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
+    }
+
+    // GlobalLayoutListener를 멤버 변수로 선언
+    private val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+        binding.recyclerView.invalidate()
+        binding.recyclerView.requestLayout()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // 뷰가 일시정지될 때 리스너 해제
+        binding.recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(globalLayoutListener)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+
 
     companion object {
         private const val REQUEST_CODE_READ_EXTERNAL_STORAGE = 100
