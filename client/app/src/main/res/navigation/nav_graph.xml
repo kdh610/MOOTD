@@ -21,7 +21,15 @@
         android:id="@+id/galleryFragment"
         android:name="com.example.mootd.fragment.GalleryFragment"
         android:label="fragment_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        tools:layout="@layout/fragment_gallery" >
+        <action
+            android:id="@+id/action_galleryFragment_to_pictureDetailFragment"
+            app:destination="@id/pictureDetailFragment">
+            <argument
+                android:name="imagePath"
+                app:argType="string" />
+        </action>
+    </fragment>
 
     <fragment
         android:id="@+id/pictureResultFragment"
@@ -32,4 +40,9 @@
             android:name="photoFilePath"
             app:argType="string" />
     </fragment>
+    <fragment
+        android:id="@+id/pictureDetailFragment"
+        android:name="com.example.mootd.fragment.PictureDetailFragment"
+        android:label="fragment_picture_detail"
+        tools:layout="@layout/fragment_picture_detail" />
 </navigation>
