@@ -33,6 +33,9 @@ dependencies {
 
     //webflux세팅
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    //s3 설정
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 }
 
 tasks.named('test') {
