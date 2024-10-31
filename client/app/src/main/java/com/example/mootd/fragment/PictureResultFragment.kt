@@ -46,7 +46,8 @@ class PictureResultFragment : Fragment() {
         photoFilePath = arguments?.getString("photoFilePath") ?: ""
 
         val rotatedBitmap = getRotatedBitmap(photoFilePath)
-        binding.photoPreview.setImageBitmap(rotatedBitmap)
+        val originalBitmap = BitmapFactory.decodeFile(photoFilePath)
+        binding.photoPreview.setImageBitmap(originalBitmap)
 
         binding.btnSave.setOnClickListener { saveToGallery() }
         binding.btnBack.setOnClickListener{
@@ -96,16 +97,16 @@ class PictureResultFragment : Fragment() {
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
         uri?.let {
-            resolver.openOutputStream(it)?.use {
-                outputStream ->
-                val bitmap = BitmapFactory.decodeFile(photoFilePath)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            resolver.openOutputStream(it)?.use { outputStream ->
+                // 회전하지 않은 원본 비트맵 사용
+                val originalBitmap = BitmapFactory.decodeFile(photoFilePath)
+                originalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
                 Toast.makeText(requireContext(), "사진이 갤러리에 저장되었습니다.", Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             }
         }
-
     }
+
 
     private fun sharePhoto() {
         val photoFile = File(photoFilePath)
