@@ -36,6 +36,15 @@ class PictureDetailFragment : Fragment() {
                 .load(it)
                 .into(binding.detailImageView)
         }
+
+        val bundle = Bundle().apply {
+            putString("imagePath", imagePath) // imagePath는 로드된 이미지의 실제 경로여야 함
+        }
+
+        binding.createGuideButton.setOnClickListener{
+            findNavController().navigate(R.id.action_pictureDetailFragment_to_createGuideFragment, bundle)
+        }
+
     }
 
     override fun onDestroyView() {
