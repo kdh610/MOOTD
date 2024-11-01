@@ -23,7 +23,10 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mootd.R
+import com.example.mootd.adapter.GuideAdapter
 import com.example.mootd.databinding.FragmentMainBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -40,6 +43,15 @@ class MainFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
 
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+    private val guideImageList = listOf(
+        // 여기에 이미지 URI 또는 리소스 ID를 추가
+        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
+        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
+        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
+        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
+        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg"
+    )
 
 
     override fun onCreateView(
@@ -67,6 +79,29 @@ class MainFragment : Fragment() {
             findNavController().navigate(R.id.action_mainFragment_to_galleryFragment)
         }
 
+        binding.btnGuide.setOnClickListener {
+            // 가로 스크롤 사진 목록 보이기
+            binding.horizontalLayout.visibility = View.VISIBLE
+            setupHorizontalRecyclerView() // 가로 스크롤 RecyclerView 설정
+        }
+
+
+        binding.btnMore.setOnClickListener {
+            GuidePopupFragment().show(parentFragmentManager, "GuidePopupFragment")
+        }
+
+    }
+
+    private fun setupHorizontalRecyclerView() {
+        binding.horizontalRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = GuideAdapter(guideImageList) { imageUri ->
+                // 클릭 이벤트 처리
+                // 예: 클릭한 이미지 URI를 로그로 출력하거나, 다른 화면으로 이동하는 코드 작성
+                println("Image clicked: $imageUri")
+            }
+            setHasFixedSize(true)
+        }
     }
 
     private fun navigateToMapFragment() {
