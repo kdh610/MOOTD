@@ -1,6 +1,5 @@
 package com.bwd4.mootd.common.exception;
 
-import com.bwd4.mootd.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

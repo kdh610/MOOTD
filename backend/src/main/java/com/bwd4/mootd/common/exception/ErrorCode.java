@@ -1,6 +1,5 @@
 package com.bwd4.mootd.common.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 public enum ErrorCode {
