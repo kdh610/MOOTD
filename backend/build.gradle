@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.6'
+    id "org.sonarqube" version "4.0.0.2929"
 }
 
 group = 'com.example'
@@ -34,6 +35,15 @@ dependencies {
     //webflux세팅
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+}
+
+// SonarQube 설정
+sonarqube {
+    properties {
+        property "sonar.projectKey", System.getenv("SONAR_PROJECT_KEY") // SonarQube에서 생성한 프로젝트 키
+        property "sonar.host.url",  System.getenv("SONAR_HOST_URL") // SonarQube 서버 URL
+        property "sonar.login",  System.getenv("SONAR_LOGIN") // SonarQube 인증 토큰
+    }
 }
 
 tasks.named('test') {
