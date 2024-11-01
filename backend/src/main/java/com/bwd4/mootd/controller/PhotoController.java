@@ -1,20 +1,29 @@
 package com.bwd4.mootd.controller;
 
 import com.bwd4.mootd.common.response.ApiResponse;
+import com.bwd4.mootd.dto.request.UploadTestRequestDTO;
+import com.bwd4.mootd.service.PhotoService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/images")
-public class ImageController {
+@RequestMapping("/api/v1/photos")
+public class PhotoController {
+
+    private final PhotoService photoService;
+
+    @Autowired
+    public PhotoController(PhotoService photoService) {
+        this.photoService = photoService;
+    }
 
     @PostMapping
-    public Mono<String> uploadImage() {
-        return Mono.just("ok");
+    public Mono<String> uploadPhoto(@RequestBody UploadTestRequestDTO request) {
+
+        return photoService.uploadPhoto(request);
     }
 
     @GetMapping
