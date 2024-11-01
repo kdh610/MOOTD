@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
-@Document
+@Document(collection = "photo")
 public class Photo {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨

@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 @Service
 @Slf4j
 public class PhotoService {
-    private PhotoRepository photoRepository;
+    private final PhotoRepository photoRepository;
 
     @Autowired
     public PhotoService(PhotoRepository photoRepository) {
@@ -22,9 +22,9 @@ public class PhotoService {
         Photo photo = new Photo();
         photo.setName(request.name());
 
-        // photoRepository.save(photo) 작업이 비동기적으로 완료될 때까지 기다렸다가 "ok" 반환
         return photoRepository.save(photo) // 저장 작업을 Mono로 처리
                 .doOnNext(savedPhoto -> log.info("photo={}", savedPhoto.getName())) // doOnNext로 수정
+                .doOnError(error -> log.error("Failed to save photo", error)) // 오류 시 로그 출력
                 .then(Mono.just("ok")); // 저장이 완료되면 "ok" 반환
     }
 }
