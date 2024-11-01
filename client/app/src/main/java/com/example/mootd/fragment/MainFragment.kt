@@ -62,7 +62,12 @@ class MainFragment : Fragment() {
 
         binding.btnCapture.setOnClickListener{takePhoto()}
         binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
+        binding.btnMap.setOnClickListener { navigateToMapFragment() }
 
+    }
+
+    private fun navigateToMapFragment() {
+        findNavController().navigate(R.id.action_mainFragment_to_mapFragment)
     }
 
     override fun onRequestPermissionsResult(
