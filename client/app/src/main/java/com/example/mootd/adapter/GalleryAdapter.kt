@@ -21,7 +21,7 @@ class GalleryAdapter(private val imageList: List<String>, private val onItemClic
         val imageUri = imageList[position]
         Glide.with(holder.itemView.context)
             .load(imageUri)
-            .override(200, 200) // 이미지 크기 조정 (최적화)
+            .override(200, 200)
             .centerCrop()
             .diskCacheStrategy(DiskCacheStrategy.ALL) // 캐싱 설정
             .into(holder.imageView)

@@ -33,9 +33,6 @@ class CreateGuideFragment : Fragment() {
 
         imagePath = arguments?.getString("imagePath") ?: ""
 
-        // 경로 확인을 위해 로그 출력
-         Log.d("CreateGuideFragment", "Image Path: $imagePath")
-
         loadImage(imagePath)
 
         setupToggleButton(binding.personButton)
