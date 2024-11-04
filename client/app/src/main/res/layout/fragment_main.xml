@@ -88,17 +88,28 @@
         android:id="@+id/horizontalLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:padding="8dp"
         android:visibility="gone"
+        android:padding="8dp"
         android:background="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/viewFinder">
+
+        <TextView
+            android:id="@+id/btnCloseHorizontalLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="닫기"
+            android:textColor="@color/black"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp" />
 
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/horizontalRecyclerView"
             android:layout_width="0dp"
-            android:layout_height="100dp"
+            android:layout_height="wrap_content"
             android:clipToPadding="false"
             android:orientation="horizontal"
             android:paddingStart="8dp"

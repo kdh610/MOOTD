@@ -10,27 +10,32 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.mootd.R
 
 class GuideAdapter(
-    private val imageList: List<String>,
+    private var imageList: List<String>,
+    private val layoutId: Int,
     private val onItemClick: (String) -> Unit
 ) : RecyclerView.Adapter<GuideAdapter.GuideViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GuideViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_guide_image, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
         return GuideViewHolder(view)
     }
+
 
     override fun onBindViewHolder(holder: GuideViewHolder, position: Int) {
         val imageUri = imageList[position]
         Glide.with(holder.itemView.context)
             .load(imageUri)
             .centerCrop()
-            .override(200, 200)
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .into(holder.imageView)
 
         holder.imageView.post {
             val width = holder.imageView.width
-            holder.imageView.layoutParams.height = width
+            if (layoutId == R.layout.item_guide_image) {
+                holder.imageView.layoutParams.height = (width * 4) / 3 // 4:3 비율 적용
+            } else {
+                holder.imageView.layoutParams.height = width // 1:1 비율 적용
+            }
         }
 
         holder.itemView.setOnClickListener {

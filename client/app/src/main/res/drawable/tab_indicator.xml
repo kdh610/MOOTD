@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <size android:height="3dp"/> <!-- 인디케이터의 높이를 줄여서 밑줄처럼 표시 -->
+    <solid android:color="@color/main_color"/> <!-- 원하는 인디케이터 색상 -->
+</shape>

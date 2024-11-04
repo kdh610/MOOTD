@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.graphics.Rect
 import android.media.ExifInterface
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +14,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -46,6 +48,7 @@ class MainFragment : Fragment() {
 
     private val guideImageList = listOf(
         // 여기에 이미지 URI 또는 리소스 ID를 추가
+        "https://files.oaiusercontent.com/file-10O9HgJOXxh7EYcHygK3YG6c?se=2024-11-04T06%3A14%3A37Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D186fb974-e227-4c14-a26a-cf4c426f1bbd.webp&sig=XByrKnyaQdCRKOzX8erxZwhssV4gEXJa7oES/VCJG4U%3D",
         "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
         "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
         "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
@@ -87,7 +90,22 @@ class MainFragment : Fragment() {
 
 
         binding.btnMore.setOnClickListener {
-            GuidePopupFragment().show(parentFragmentManager, "GuidePopupFragment")
+            findNavController().navigate(R.id.action_mainFragment_to_guideListFragment)
+        }
+
+        binding.btnCloseHorizontalLayout.setOnClickListener{
+            binding.horizontalLayout.post {
+                binding.horizontalLayout.visibility = View.GONE
+            }
+        }
+
+        binding.btnCloseHorizontalLayout.post {
+            val parentView = binding.horizontalLayout
+            val delegateArea = Rect()
+            binding.btnCloseHorizontalLayout.getHitRect(delegateArea)
+            val extraPadding = 50 // 원하는 크기만큼 클릭 영역을 확장 (px 단위)
+            delegateArea.inset(-extraPadding, -extraPadding)
+            parentView.touchDelegate = TouchDelegate(delegateArea, binding.btnCloseHorizontalLayout)
         }
 
     }
@@ -95,7 +113,7 @@ class MainFragment : Fragment() {
     private fun setupHorizontalRecyclerView() {
         binding.horizontalRecyclerView.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = GuideAdapter(guideImageList) { imageUri ->
+            adapter = GuideAdapter(guideImageList, R.layout.item_guide_image) { imageUri ->
                 // 클릭 이벤트 처리
                 // 예: 클릭한 이미지 URI를 로그로 출력하거나, 다른 화면으로 이동하는 코드 작성
                 println("Image clicked: $imageUri")

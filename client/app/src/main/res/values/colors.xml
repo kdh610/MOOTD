@@ -9,5 +9,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="translate">#00000000</color>
     <color name="gray">#9E9E9E</color>
+    <color name="light_gray">#1F767680</color>
     <color name="main_color">#306B50</color>
 </resources>
