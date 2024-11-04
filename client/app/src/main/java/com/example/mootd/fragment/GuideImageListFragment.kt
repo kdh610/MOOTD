@@ -1,6 +1,8 @@
 package com.example.mootd.fragment
 
+import android.content.Context
 import android.os.Bundle
+import android.os.Environment
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +11,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
 import com.example.mootd.databinding.FragmentGuideImageListBinding
+import java.io.File
 
 
 class GuideImageListFragment : Fragment() {
@@ -17,32 +20,6 @@ class GuideImageListFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var guideAdapter: GuideAdapter
-
-    private val guideImageList = listOf(
-        // 이미지 경로 추가
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg"
-
-    )
-
-    private val recentImageList = listOf(
-        // 최근 사용 이미지 경로 추가
-        "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh",
-        "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh"
-    )
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -56,8 +33,15 @@ class GuideImageListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val listType = arguments?.getString(ARG_LIST_TYPE)
+
+        val imageList = if (listType == "new") {
+            getGuideListFromFolders()
+        } else {
+            getRecentGuideList()
+        }
+
         guideAdapter = GuideAdapter(
-            if (listType == "new") guideImageList else recentImageList,
+            imageList,
             R.layout.item_gallery_image
         ) { imageUri ->
             println("Click: ${imageUri}")
@@ -69,6 +53,30 @@ class GuideImageListFragment : Fragment() {
             setHasFixedSize(true)
         }
     }
+
+    private fun getGuideListFromFolders(): List<String> {
+        val imageList = mutableListOf<String>()
+        val rootDir = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "MyApp/GuideImages")
+
+        rootDir.listFiles()?.sortedByDescending { it.lastModified() }?.forEach { folder ->
+            if (folder.isDirectory) {
+                val originalFile = File(folder, "original.png")
+                if (originalFile.exists()) {
+                    imageList.add(originalFile.absolutePath)
+                }
+            }
+        }
+        return imageList
+    }
+
+    private fun getRecentGuideList(): List<String> {
+        return listOf(
+            // 최근 사용 이미지 경로 추가
+            "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh",
+            "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh"
+        )
+    }
+
 
     companion object {
         private const val ARG_LIST_TYPE = "list_type"
