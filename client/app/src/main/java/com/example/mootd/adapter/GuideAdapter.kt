@@ -26,7 +26,6 @@ class GuideAdapter(
         Glide.with(holder.itemView.context)
             .load(imageUri)
             .centerCrop()
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
             .into(holder.imageView)
 
         holder.imageView.post {
