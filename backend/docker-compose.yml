@@ -9,6 +9,9 @@ services:
       - "8081:8080"             # 호스트 포트:컨테이너 포트 매핑
     environment:
       SPRING_PROFILES_ACTIVE: prod # Spring 프로파일 설정 예시 (필요에 따라 수정)
+      DB_USERNAME: ${DB_USERNAME}  # Jenkins에서 전달된 DB 사용자 이름
+      DB_PASSWORD: ${DB_PASSWORD}  # Jenkins에서 전달된 DB 비밀번호
+      HOST: ${HOST}                # Jenkins에서 전달된 MongoDB 호스트
     networks:
       - app-network             # 네트워크 지정 (다른 서비스와 연결하려는 경우)
 
