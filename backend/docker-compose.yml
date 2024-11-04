@@ -12,6 +12,9 @@ services:
       DB_USERNAME: ${DB_USERNAME}  # Jenkins에서 전달된 DB 사용자 이름
       DB_PASSWORD: ${DB_PASSWORD}  # Jenkins에서 전달된 DB 비밀번호
       HOST: ${HOST}                # Jenkins에서 전달된 MongoDB 호스트
+      S3_BUCKET : ${S3_BUCKET}
+      S3_ACCESSKEY : ${S3_ACCESSKEY}
+      S3_SECRETKEY : ${S3_SECRETKEY}
     networks:
       - app-network             # 네트워크 지정 (다른 서비스와 연결하려는 경우)
 
