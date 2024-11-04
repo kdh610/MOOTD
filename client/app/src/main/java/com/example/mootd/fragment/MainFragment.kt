@@ -3,6 +3,10 @@ package com.example.mootd.fragment
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -22,6 +26,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentMainBinding
 import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -57,7 +62,15 @@ class MainFragment : Fragment() {
 
         binding.btnCapture.setOnClickListener{takePhoto()}
         binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
+        binding.btnMap.setOnClickListener { navigateToMapFragment() }
+        binding.btnGallery.setOnClickListener{
+            findNavController().navigate(R.id.action_mainFragment_to_galleryFragment)
+        }
 
+    }
+
+    private fun navigateToMapFragment() {
+        findNavController().navigate(R.id.action_mainFragment_to_mapFragment)
     }
 
     override fun onRequestPermissionsResult(
@@ -126,6 +139,9 @@ class MainFragment : Fragment() {
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
 
+                    val rotatedBitmap = getRotatedBitmap(photoFile.absolutePath)
+                    saveRotatedBitmap(photoFile, rotatedBitmap)
+
                     val bundle = Bundle().apply {
                         putString("photoFilePath", photoFile.absolutePath)
                     }
@@ -133,6 +149,37 @@ class MainFragment : Fragment() {
                 }
             }
         )
+    }
+
+    private fun saveRotatedBitmap(file: File, bitmap: Bitmap) {
+        FileOutputStream(file).use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        }
+    }
+
+    private fun getRotatedBitmap(filePath: String): Bitmap {
+        val bitmap = BitmapFactory.decodeFile(filePath)
+
+        // EXIF 데이터를 통해 회전 정보 얻기
+        val exif = ExifInterface(filePath)
+        val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        val rotationInDegrees = exifToDegrees(rotation)
+
+        // 회전 매트릭스를 사용하여 Bitmap 회전
+        val matrix = Matrix()
+        if (rotationInDegrees != 0) {
+            matrix.preRotate(rotationInDegrees.toFloat())
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+
+    private fun exifToDegrees(rotation: Int): Int {
+        return when (rotation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270
+            else -> 0
+        }
     }
 
 
