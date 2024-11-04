@@ -50,7 +50,7 @@ sonarqube {
 }
 
 bootJar {
-    enabled = false
+    mainClassName = 'com.example.MootdApplication'
 }
 
 tasks.named('test') {
