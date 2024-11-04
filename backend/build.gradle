@@ -49,9 +49,6 @@ sonarqube {
     }
 }
 
-bootJar {
-    mainClassName = 'com.example.MootdApplication'
-}
 
 tasks.named('test') {
     useJUnitPlatform()
