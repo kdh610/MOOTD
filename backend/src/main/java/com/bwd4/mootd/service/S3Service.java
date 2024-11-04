@@ -33,7 +33,8 @@ public class S3Service {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
-
+    
+    // 파일 업로드 요청
     public String upload(MultipartFile file, ImageType imageType) throws IOException {
 
         if(file.isEmpty() || Objects.isNull(file.getOriginalFilename())) {
@@ -42,12 +43,13 @@ public class S3Service {
         return this.uploadImage(file, imageType);
     }
 
+    // 파일 확장자 확인 & S3저장
     private String uploadImage(MultipartFile file, ImageType imageType) throws IOException {
         this.validateImageFileExtention(file.getOriginalFilename());
         return this.uploadImageToS3(file, imageType);
     }
 
-
+    // 이미지파일이 유효한 확장자인지 확인
     private void validateImageFileExtention(String filename) {
         int lastDotIndex = filename.lastIndexOf(".");
         if (lastDotIndex == -1) {
@@ -62,7 +64,7 @@ public class S3Service {
         }
     }
 
-
+    // S3에 이미지 저장
     public String uploadImageToS3(MultipartFile file, ImageType imageType) throws IOException {
         String originalFilename = file.getOriginalFilename(); //원본 파일 이름
 
