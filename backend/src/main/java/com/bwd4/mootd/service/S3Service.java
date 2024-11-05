@@ -9,6 +9,7 @@ import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.enums.ImageType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class S3Service {
 
     private final AmazonS3 amazonS3;
@@ -36,7 +38,6 @@ public class S3Service {
     
     // 파일 업로드 요청
     public String upload(MultipartFile file, ImageType imageType) throws IOException {
-
         if(file.isEmpty() || Objects.isNull(file.getOriginalFilename())) {
             throw new BusinessException(ErrorCode.EMPTY_FILE);
         }
