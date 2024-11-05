@@ -42,7 +42,7 @@ class PictureDetailFragment : Fragment() {
         }
 
         binding.createGuideButton.setOnClickListener{
-            findNavController().navigate(R.id.action_pictureDetailFragment_to_createGuideFragment, bundle)
+            findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment, bundle)
         }
 
     }
