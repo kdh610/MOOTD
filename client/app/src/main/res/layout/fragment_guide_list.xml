@@ -15,7 +15,7 @@
         android:layout_marginStart="10dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="뒤로 가기"
-        android:src="@drawable/left_back_button"
+        android:src="@drawable/icon_left_back_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />

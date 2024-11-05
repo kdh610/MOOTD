@@ -17,7 +17,9 @@ import android.view.LayoutInflater
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.Toast
+import android.widget.ToggleButton
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -66,6 +68,15 @@ class MainFragment : Fragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("MainFragment", "onViewCreated called")
+        // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
+        findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
+            Log.d("MainFragment", "Overlay Image Path?: $imagePath")
+            // imagePath를 통해 오버레이 이미지 설정
+            imagePath?.let {
+                showOverlayImage(imagePath)
+            }
+        }
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -108,6 +119,18 @@ class MainFragment : Fragment() {
             parentView.touchDelegate = TouchDelegate(delegateArea, binding.btnCloseHorizontalLayout)
         }
 
+        setupGuideButton(binding.btnOriginalGuide)
+        setupGuideButton(binding.btnPersonGuide)
+        setupGuideButton(binding.btnBackgroundGuide)
+
+
+    }
+
+    private fun setupGuideButton(button: ImageButton) {
+        button.setOnClickListener {
+            // 선택 상태 토글
+            button.isSelected = !button.isSelected
+        }
     }
 
     private fun setupHorizontalRecyclerView() {
@@ -258,5 +281,22 @@ class MainFragment : Fragment() {
                 add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }.toTypedArray()
+    }
+
+    fun showOverlayImage(imagePath: String) {
+        Log.d("MainFragment", "showOverlayImage called with path: $imagePath")
+        val bitmap = BitmapFactory.decodeFile(imagePath)
+
+        if (bitmap != null) {
+            Log.d("MainFragment", "Loading image from path: $imagePath")
+            binding.overlayImage.setImageBitmap(bitmap)
+            binding.overlayImage.visibility = View.VISIBLE
+        } else {
+            Log.e("MainFragment", "Failed to load image: Bitmap is null for path $imagePath")
+        }
+    }
+
+    fun hideOverlayImage() {
+        binding.overlayImage.visibility = View.GONE
     }
 }
