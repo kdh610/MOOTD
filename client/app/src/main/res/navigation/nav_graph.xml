@@ -58,22 +58,14 @@
         android:label="fragment_picture_detail"
         tools:layout="@layout/fragment_picture_detail" >
         <action
-            android:id="@+id/action_pictureDetailFragment_to_createGuideFragment"
-            app:destination="@id/createGuideFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim"
-            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+            android:id="@+id/action_pictureDetailFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
     </fragment>
     <fragment
         android:id="@+id/createGuideFragment"
         android:name="com.example.mootd.fragment.CreateGuideFragment"
         android:label="fragment_create_guide"
-        tools:layout="@layout/fragment_create_guide" >
-        <action
-            android:id="@+id/action_createGuideFragment_to_mainFragment"
-            app:destination="@id/mainFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_create_guide" />
     <fragment
         android:id="@+id/guideListFragment"
         android:name="com.example.mootd.fragment.GuideListFragment"
