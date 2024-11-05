@@ -57,6 +57,7 @@ class CreateGuideFragment : Fragment() {
         binding.createGuideButton.setOnClickListener {
             saveImageToInternalStorage()
             findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
+            findNavController().navigate(R.id.action_createGuideFragment_to_mainFragment)
         }
     }
 
