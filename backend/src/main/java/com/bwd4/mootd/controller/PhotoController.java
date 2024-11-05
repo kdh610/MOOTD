@@ -42,24 +42,8 @@ public class PhotoController {
             return Mono.just(new ResponseEntity<>(ApiResponse.success("data"), HttpStatus.OK));
     }
 
-
     @GetMapping("/{id}")
     public Mono<String> getImage(@PathVariable String id) {
         return Mono.just("ok");
-    }
-
-    @GetMapping("/test")
-    public Mono<String> test() {
-        asyncMethod();
-        return Mono.just("ok");
-    }
-
-    private void asyncMethod() {
-        Mono.delay(Duration.ofSeconds(3)) // 3초 대기 후 시작
-                .thenMany(Flux.range(1, 10) // 1부터 10까지 출력
-                        ) // 각 숫자마다 1초 대기
-                .doOnNext(number -> System.out.println("Number: " + number)) // 숫자 출력
-                .subscribeOn(Schedulers.boundedElastic()) // 비동기 스레드에서 실행
-                .subscribe(); // 실행 시작
     }
 }
