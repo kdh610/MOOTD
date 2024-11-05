@@ -1,6 +1,11 @@
 package com.example.mootd.fragment
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -11,6 +16,12 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentCreateGuideBinding
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 class CreateGuideFragment : Fragment() {
@@ -19,6 +30,7 @@ class CreateGuideFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var imagePath: String
+    private val folderRootPath = "MyApp/GuideImages"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,10 +55,36 @@ class CreateGuideFragment : Fragment() {
         }
 
         binding.createGuideButton.setOnClickListener {
-            Log.d("CreateGuideFragment", "Overlay Image Path: $imagePath")
-            // 이미지 경로를 MainFragment로 전달
+            saveImageToInternalStorage()
             findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
-            findNavController().navigate(R.id.action_createGuideFragment_to_mainFragment)
+        }
+    }
+
+    private fun saveImageToInternalStorage() {
+        val folderName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val folder = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "$folderRootPath/$folderName")
+        if (!folder.exists()) {
+            folder.mkdirs()
+        }
+
+        // 원본 이미지 저장
+        saveImage(loadBitmapFromPath(imagePath), File(folder, "original.png"))
+
+        // 추가 이미지 데이터 저장 (예시)
+        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay1.png"))
+        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay2.png"))
+        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay3.png"))
+    }
+
+    private fun loadBitmapFromPath(path: String): Bitmap {
+        return BitmapFactory.decodeFile(path)
+    }
+
+    private fun saveImage(bitmap: Bitmap?, file: File) {
+        bitmap?.let {
+            FileOutputStream(file).use { out ->
+                it.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
         }
     }
 

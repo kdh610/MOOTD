@@ -36,8 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
-application.yml
+application-local.yml
 
-##resource에 있는 **.yml모두 제외한다.
-**/resource/**.yml
+
+src/main/resources/.env
 

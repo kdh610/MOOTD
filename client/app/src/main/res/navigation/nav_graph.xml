@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_mainFragment_to_mapFragment"
             app:destination="@id/mapFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_guideListFragment"
+            app:destination="@id/guideListFragment" />
     </fragment>
     <fragment
         android:id="@+id/galleryFragment"
@@ -71,4 +74,9 @@
             android:id="@+id/action_createGuideFragment_to_mainFragment"
             app:destination="@id/mainFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/guideListFragment"
+        android:name="com.example.mootd.fragment.GuideListFragment"
+        android:label="fragment_guide_list"
+        tools:layout="@layout/fragment_guide_list" />
 </navigation>
