@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -55,13 +57,27 @@ class PictureDetailFragment : Fragment() {
         }
 
         binding.createGuideButton.setOnClickListener{
+            showLoadingOverlay()
             CoroutineScope(Dispatchers.IO).launch {
                 saveImageToInternalStorage()
             }
-            findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
-            findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
+            Handler(Looper.getMainLooper()).postDelayed({
+                hideLoadingOverlay()
+                findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
+                findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
+            }, 3000) // 3초 딜레이
+//            findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
+//            findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
         }
 
+    }
+
+    private fun showLoadingOverlay() {
+        binding.loadingOverlay.visibility = View.VISIBLE
+    }
+
+    private fun hideLoadingOverlay() {
+        binding.loadingOverlay.visibility = View.GONE
     }
     private suspend fun saveImageToInternalStorage() {
         val folderName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
