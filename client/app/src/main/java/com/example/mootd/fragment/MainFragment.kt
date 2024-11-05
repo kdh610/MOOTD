@@ -17,7 +17,9 @@ import android.view.LayoutInflater
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.Toast
+import android.widget.ToggleButton
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -117,6 +119,18 @@ class MainFragment : Fragment() {
             parentView.touchDelegate = TouchDelegate(delegateArea, binding.btnCloseHorizontalLayout)
         }
 
+        setupGuideButton(binding.btnOriginalGuide)
+        setupGuideButton(binding.btnPersonGuide)
+        setupGuideButton(binding.btnBackgroundGuide)
+
+
+    }
+
+    private fun setupGuideButton(button: ImageButton) {
+        button.setOnClickListener {
+            // 선택 상태 토글
+            button.isSelected = !button.isSelected
+        }
     }
 
     private fun setupHorizontalRecyclerView() {
