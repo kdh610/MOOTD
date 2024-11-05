@@ -6,7 +6,10 @@ import com.bwd4.mootd.repository.PhotoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -27,4 +30,19 @@ public class PhotoService {
                 .doOnError(error -> log.error("Failed to save photo", error)) // 오류 시 로그 출력
                 .then(Mono.just("ok")); // 저장이 완료되면 "ok" 반환
     }
+
+    public Flux<Photo> searchTag(String tag){
+
+        return photoRepository.findByTagContaining(tag)
+                .doOnNext(photo -> log.info("Queried photo: {}", photo));
+    }
+
+    public Mono<Photo> searchName(String id){
+
+        return photoRepository.findByName(id)
+                .doOnNext(photo -> log.info("Fetched photo: {}", photo));
+
+    }
+
+
 }
