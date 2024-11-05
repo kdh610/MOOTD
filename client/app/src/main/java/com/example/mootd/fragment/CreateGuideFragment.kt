@@ -16,6 +16,10 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentCreateGuideBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -55,13 +59,15 @@ class CreateGuideFragment : Fragment() {
         }
 
         binding.createGuideButton.setOnClickListener {
-            saveImageToInternalStorage()
+            CoroutineScope(Dispatchers.IO).launch {
+                saveImageToInternalStorage()
+            }
             findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
             findNavController().navigate(R.id.action_createGuideFragment_to_mainFragment)
         }
     }
 
-    private fun saveImageToInternalStorage() {
+    private suspend fun saveImageToInternalStorage() {
         val folderName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val folder = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "$folderRootPath/$folderName")
         if (!folder.exists()) {
@@ -69,22 +75,24 @@ class CreateGuideFragment : Fragment() {
         }
 
         // 원본 이미지 저장
-        saveImage(loadBitmapFromPath(imagePath), File(folder, "original.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "original.png"))
 
         // 추가 이미지 데이터 저장 (예시)
-        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay1.png"))
-        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay2.png"))
-        saveImage(loadBitmapFromPath(imagePath), File(folder, "overlay3.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay1.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay2.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay3.png"))
     }
 
     private fun loadBitmapFromPath(path: String): Bitmap {
         return BitmapFactory.decodeFile(path)
     }
 
-    private fun saveImage(bitmap: Bitmap?, file: File) {
-        bitmap?.let {
-            FileOutputStream(file).use { out ->
-                it.compress(Bitmap.CompressFormat.PNG, 100, out)
+    private suspend fun saveImageAsync(bitmap: Bitmap?, file: File) {
+        withContext(Dispatchers.IO) {
+            bitmap?.let {
+                FileOutputStream(file).use { out ->
+                    it.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                }
             }
         }
     }
