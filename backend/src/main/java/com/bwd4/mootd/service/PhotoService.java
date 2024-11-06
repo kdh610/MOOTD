@@ -32,10 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -172,6 +169,10 @@ public class PhotoService {
                                             photo.getMaskImageUrl()
                                     );
                                 }
+                                // 최신순으로 정렬(내림차순 정렬)
+                                photoUsageHistory.getPhotoUsageList().sort(
+                                        Comparator.comparing(PhotoUsage::getLastUsedAt).reversed()
+                                );
                                 // 갱신된 또는 추가된 photoUsageHistory 저장
                                 return photoUsageHistoryRepository.save(photoUsageHistory);
                             });

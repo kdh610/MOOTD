@@ -29,7 +29,7 @@ public class PhotoUsageHistory {
         this.photoUsageList.add(new PhotoUsage(photoId, lastUsedAt, originImageUrl, guideImageUrl, maskImageUrl));
 
         // 항목 추가 후 즉시 내림차순 정렬
-        this.photoUsageList.sort(Comparator.comparing(PhotoUsage::getLastUsedAt).reversed());
+//        this.photoUsageList.sort(Comparator.comparing(PhotoUsage::getLastUsedAt).reversed());
     }
 
 }
