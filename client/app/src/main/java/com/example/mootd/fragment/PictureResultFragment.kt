@@ -19,7 +19,12 @@ import androidx.core.content.FileProvider
 import androidx.navigation.fragment.findNavController
 import com.example.mootd.R
 import com.example.mootd.databinding.FragmentPictureResultBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -44,33 +49,46 @@ class PictureResultFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         photoFilePath = arguments?.getString("photoFilePath") ?: ""
+        val isFrontCamera = arguments?.getBoolean("isFrontCamera") ?: false
 
-        val rotatedBitmap = getRotatedBitmap(photoFilePath)
-        val originalBitmap = BitmapFactory.decodeFile(photoFilePath)
-        binding.photoPreview.setImageBitmap(originalBitmap)
+        CoroutineScope(Dispatchers.Main).launch {
+            val previewBitmap = withContext(Dispatchers.IO) {
+                getCorrectlyRotatedBitmap(photoFilePath, isFrontCamera)
+            }
+            binding.photoPreview.setImageBitmap(previewBitmap)
+        }
+
+
 
         binding.btnSave.setOnClickListener { saveToGallery() }
-        binding.btnBack.setOnClickListener{
-            findNavController().popBackStack()
-        }
-        binding.btnShare.setOnClickListener{ sharePhoto() }
+        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.btnShare.setOnClickListener { sharePhoto() }
     }
 
-    private fun getRotatedBitmap(filePath: String): Bitmap {
-        val bitmap = BitmapFactory.decodeFile(filePath)
+    private suspend fun getCorrectlyRotatedBitmap(filePath: String, isFrontCamera: Boolean): Bitmap {
+        return withContext(Dispatchers.IO) {
+            val bitmap = BitmapFactory.decodeFile(filePath)
+            val exif = ExifInterface(filePath)
+            val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            val rotationInDegrees = exifToDegrees(rotation)
 
-        // EXIF 데이터를 통해 회전 정보 얻기
-        val exif = ExifInterface(filePath)
-        val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-        val rotationInDegrees = exifToDegrees(rotation)
+            val matrix = Matrix()
 
-        // 회전 매트릭스를 사용하여 Bitmap 회전
-        val matrix = Matrix()
-        if (rotationInDegrees != 0) {
-            matrix.preRotate(rotationInDegrees.toFloat())
+            // 회전된 이미지를 정방향으로 수정
+            if (rotationInDegrees != 0) {
+                matrix.postRotate(rotationInDegrees.toFloat())
+            }
+
+            // 전면 카메라일 경우 좌우 반전 적용
+            if (isFrontCamera) {
+                matrix.postScale(-1f, 1f)
+            }
+
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
         }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
+
+
 
     private fun exifToDegrees(rotation: Int): Int {
         return when (rotation) {
@@ -81,8 +99,10 @@ class PictureResultFragment : Fragment() {
         }
     }
 
+
     private fun saveToGallery() {
         val photoFile = File(photoFilePath)
+        val isFrontCamera = arguments?.getBoolean("isFrontCamera") ?: false
         val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
 
         val contentValues = ContentValues().apply {
@@ -97,12 +117,16 @@ class PictureResultFragment : Fragment() {
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
         uri?.let {
-            resolver.openOutputStream(it)?.use { outputStream ->
-                // 회전하지 않은 원본 비트맵 사용
-                val originalBitmap = BitmapFactory.decodeFile(photoFilePath)
-                originalBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-                Toast.makeText(requireContext(), "사진이 갤러리에 저장되었습니다.", Toast.LENGTH_SHORT).show()
-                findNavController().popBackStack()
+            CoroutineScope(Dispatchers.IO).launch {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    // 비동기적으로 회전된 비트맵을 로드하여 저장
+                    val rotatedBitmap = getCorrectlyRotatedBitmap(photoFilePath, isFrontCamera)
+                    withContext(Dispatchers.Main) {
+                        rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                        Toast.makeText(requireContext(), "사진이 갤러리에 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                        findNavController().popBackStack()
+                    }
+                }
             }
         }
     }

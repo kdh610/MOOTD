@@ -32,6 +32,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
 import com.example.mootd.databinding.FragmentMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
@@ -68,7 +72,6 @@ class MainFragment : Fragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("MainFragment", "onViewCreated called")
         // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
         findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
             Log.d("MainFragment", "Overlay Image Path?: $imagePath")
@@ -195,16 +198,10 @@ class MainFragment : Fragment() {
     }
 
     private fun takePhoto() {
-        // imageCapture 객체가 null인 경우 바로 return
         val imageCapture = imageCapture ?: return
-
-        // 임시 파일 생성
         val photoFile = File(requireContext().cacheDir, "temp_photo.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-
-
-        // 사진 촬영 후 결과를 처리하는 리스너 설정
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(requireContext()),
@@ -214,12 +211,10 @@ class MainFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-
-                    val rotatedBitmap = getRotatedBitmap(photoFile.absolutePath)
-                    saveRotatedBitmap(photoFile, rotatedBitmap)
-
+                    // 촬영 완료 시 바로 PictureResultFragment로 전환
                     val bundle = Bundle().apply {
                         putString("photoFilePath", photoFile.absolutePath)
+                        putBoolean("isFrontCamera", cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
                     }
                     findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
                 }
@@ -227,27 +222,7 @@ class MainFragment : Fragment() {
         )
     }
 
-    private fun saveRotatedBitmap(file: File, bitmap: Bitmap) {
-        FileOutputStream(file).use { outputStream ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        }
-    }
 
-    private fun getRotatedBitmap(filePath: String): Bitmap {
-        val bitmap = BitmapFactory.decodeFile(filePath)
-
-        // EXIF 데이터를 통해 회전 정보 얻기
-        val exif = ExifInterface(filePath)
-        val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-        val rotationInDegrees = exifToDegrees(rotation)
-
-        // 회전 매트릭스를 사용하여 Bitmap 회전
-        val matrix = Matrix()
-        if (rotationInDegrees != 0) {
-            matrix.preRotate(rotationInDegrees.toFloat())
-        }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
 
     private fun exifToDegrees(rotation: Int): Int {
         return when (rotation) {
