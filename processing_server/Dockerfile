@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y git\
     g++ \
     build-essential \
     libpq-dev \
+    libgl1-mesa-glx \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
