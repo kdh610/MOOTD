@@ -1,5 +1,6 @@
 package com.example.mootd.fragment
 
+import android.content.Context
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
@@ -7,6 +8,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Rect
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.media.ExifInterface
 import android.os.Build
 import android.os.Bundle
@@ -34,9 +41,22 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import org.pytorch.IValue
+import org.pytorch.Module
+import org.pytorch.Tensor
+import org.pytorch.torchvision.TensorImageUtils
 
 
-class MainFragment : Fragment() {
+class MainFragment : Fragment(), SensorEventListener {
+    private lateinit var sensorManager: SensorManager
+    private lateinit var module: Module
+    private var rotationSensor: Sensor? = null
+
+    // 목표 각도와 임계값 설정
+    private val targetPitch = 0f // 목표 피치 각도
+    private val targetRoll = 0f // 목표 롤 각도
+    private val threshold = 5f // 허용 가능한 각도 차이
+
 
     private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
@@ -82,6 +102,7 @@ class MainFragment : Fragment() {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         binding.btnCapture.setOnClickListener{takePhoto()}
@@ -117,14 +138,62 @@ class MainFragment : Fragment() {
             parentView.touchDelegate = TouchDelegate(delegateArea, binding.btnCloseHorizontalLayout)
         }
 
+        sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        rotationSensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(this)
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_ROTATION_VECTOR) {
+            // 회전 행렬 계산
+            val rotationMatrix = FloatArray(9)
+            val orientation = FloatArray(3)
+
+//            // 회전 행렬 계산
+//            SensorManager.getRotationMatrixFromOrientation(event.values, rotationMatrix)
+
+            // 방향 정보 가져오기
+            SensorManager.getOrientation(rotationMatrix, orientation)
+
+            // 피치와 롤 값을 계산
+            val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat() // Pitch (x-axis)
+            val roll = Math.toDegrees(orientation[2].toDouble()).toFloat() // Roll (y-axis)
+
+            // 카메라 위치 조정
+            adjustCameraPosition(pitch, roll)
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+
+        Log.d("Sensor", "Accuracy changed: $accuracy")
+    }
+
+    private fun adjustCameraPosition(pitch: Float, roll: Float) {
+
+        if (Math.abs(pitch - targetPitch) > threshold || Math.abs(roll - targetRoll) > threshold) {
+
+            Toast.makeText(context, "Adjust camera angle for better alignment.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupHorizontalRecyclerView() {
         binding.horizontalRecyclerView.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = GuideAdapter(guideImageList, R.layout.item_guide_image) { imageUri ->
-                // 클릭 이벤트 처리
-                // 예: 클릭한 이미지 URI를 로그로 출력하거나, 다른 화면으로 이동하는 코드 작성
+
                 println("Image clicked: $imageUri")
             }
             setHasFixedSize(true)
@@ -285,4 +354,10 @@ class MainFragment : Fragment() {
     fun hideOverlayImage() {
         binding.overlayImage.visibility = View.GONE
     }
+
+
+
+
+
+
 }
