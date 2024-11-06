@@ -198,46 +198,10 @@ class MainFragment : Fragment() {
     }
 
     private fun takePhoto() {
-        // imageCapture 객체가 null인 경우 바로 return
         val imageCapture = imageCapture ?: return
-
-        // 임시 파일 생성
         val photoFile = File(requireContext().cacheDir, "temp_photo.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-
-
-        // 사진 촬영 후 결과를 처리하는 리스너 설정
-//        imageCapture.takePicture(
-//            outputOptions,
-//            ContextCompat.getMainExecutor(requireContext()),
-//            object : ImageCapture.OnImageSavedCallback {
-//                override fun onError(exc: ImageCaptureException) {
-//                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-//                }
-//
-//                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-//                    // 사진 회전 및 저장 작업을 비동기로 수행
-//                    CoroutineScope(Dispatchers.IO).launch {
-//                        // 회전된 비트맵 생성
-//                        val rotatedBitmap = getRotatedBitmap(photoFile.absolutePath)
-//
-//                        // 비트맵 저장
-//                        saveRotatedBitmap(photoFile, rotatedBitmap)
-//
-//                        // UI 스레드에서 Fragment 전환
-//                        withContext(Dispatchers.Main) {
-//                            // PictureResultFragment로 이동
-//                            val bundle = Bundle().apply {
-//                                putString("photoFilePath", photoFile.absolutePath)
-//                            }
-//                            findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
-//                        }
-//                    }
-//                }
-//            }
-//        )
-//    }
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(requireContext()),
@@ -247,9 +211,10 @@ class MainFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    // PictureResultFragment로 파일 경로만 전달
+                    // PictureResultFragment로 빠르게 이동
                     val bundle = Bundle().apply {
                         putString("photoFilePath", photoFile.absolutePath)
+                        putBoolean("isFrontCamera", cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
                     }
                     findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
                 }
@@ -257,25 +222,23 @@ class MainFragment : Fragment() {
         )
     }
 
-    private suspend fun getRotatedBitmap(filePath: String): Bitmap {
+
+    private suspend fun getRotatedBitmap(filePath: String, isFrontCamera: Boolean): Bitmap {
         return withContext(Dispatchers.IO) {
             val bitmap = BitmapFactory.decodeFile(filePath)
             val exif = ExifInterface(filePath)
             val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             val rotationInDegrees = exifToDegrees(rotation)
-            val matrix = Matrix()
-            if (rotationInDegrees != 0) {
-                matrix.preRotate(rotationInDegrees.toFloat())
+
+            val matrix = Matrix().apply {
+                if (rotationInDegrees != 0) {
+                    postRotate(rotationInDegrees.toFloat())
+                }
+                if (isFrontCamera) {
+                    postScale(-1f, 1f) // 좌우 반전만 적용
+                }
             }
             Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        }
-    }
-
-    private suspend fun saveRotatedBitmap(file: File, bitmap: Bitmap) {
-        withContext(Dispatchers.IO) {
-            FileOutputStream(file).use { outputStream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            }
         }
     }
 
@@ -288,6 +251,15 @@ class MainFragment : Fragment() {
         }
     }
 
+
+
+    private suspend fun saveRotatedBitmap(file: File, bitmap: Bitmap) {
+        withContext(Dispatchers.IO) {
+            FileOutputStream(file).use { outputStream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            }
+        }
+    }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
