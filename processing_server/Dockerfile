@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y git\
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# CUDA를 사용하지 않도록 설정
+ENV CUDA_VISIBLE_DEVICES=""
+
 # 의존성 파일 복사
 COPY requirements.txt .
 
