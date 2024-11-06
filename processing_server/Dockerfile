@@ -15,6 +15,10 @@ COPY requirements.txt .
 # 의존성 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install certifi
+RUN pip install git+https://github.com/matterport/Mask_RCNN.git
+
+
 # 애플리케이션 파일 복사
 COPY . .
 
