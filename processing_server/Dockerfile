@@ -30,7 +30,7 @@ RUN python -c "import mrcnn; print(mrcnn.__file__)"
 
 # 애플리케이션 파일 복사 및 파일 이름 변경
 COPY . .
-RUN mv mask_rcnn.py app.py  # 파일 이름 변경
+
 
 # FastAPI 애플리케이션 실행
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "mask_rcnn:app", "--host", "0.0.0.0", "--port", "8000"]
