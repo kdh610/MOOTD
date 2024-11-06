@@ -7,8 +7,6 @@ WORKDIR /app
 # 필수 패키지 설치
 RUN apt-get update && \
     apt-get install -y \
-    pkg-config \
-    libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 의존성 파일 복사
