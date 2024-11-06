@@ -1,11 +1,15 @@
 package com.bwd4.mootd.service;
 
 import com.bwd4.mootd.domain.Photo;
+import com.bwd4.mootd.domain.PhotoUsage;
+import com.bwd4.mootd.domain.PhotoUsageHistory;
 import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
+import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
+import com.bwd4.mootd.repository.PhotoUsageHistoryRepository;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Directory;
@@ -29,7 +33,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -38,12 +44,14 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
     private final S3Service s3Service; // S3 업로드용 서비스
     private final Scheduler asyncScheduler; // 비동기 스케줄러 주입
+    private final PhotoUsageHistoryRepository photoUsageHistoryRepository;
 
     @Autowired
-    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler) {
+    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler, PhotoUsageHistoryRepository photoUsageHistoryRepository) {
         this.photoRepository = photoRepository;
         this.s3Service = s3Service;
         this.asyncScheduler = asyncScheduler;
+        this.photoUsageHistoryRepository = photoUsageHistoryRepository;
     }
 
     public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
@@ -127,9 +135,47 @@ public class PhotoService {
         Distance radius = new Distance(rad, Metrics.KILOMETERS);
         return photoRepository.findByCoordinatesNear(location, radius)
                 .map(photo -> new MapResponseDTO(
+                        photo.getId(),
                         photo.getOriginImageUrl(),
                         photo.getCoordinates().getY(),  // latitude
                         photo.getCoordinates().getX()   // longitude
                 ));
+    }
+
+    public Mono<List<PhotoUsage>> getRecentUsageByDeviceId(String deviceId) {
+        return photoUsageHistoryRepository.findById(deviceId)
+                .map(PhotoUsageHistory::getPhotoUsageList);
+    }
+
+    public Mono<Void> recordPhotoUsage(PhotoUsageRequestDTO request) {
+        //1.request의 deviceId로 history에서 값을 찾는다. 없으면 새로 생성한다. => PhoUsageHistory객체
+        //2.request의 photoId로 필요한 값을 뽑아서, photoUsageHistory객체 photoUsageList필드에 넣는다.
+        return photoUsageHistoryRepository.findById(request.deviceId())
+                .switchIfEmpty(Mono.defer(() -> Mono.just(new PhotoUsageHistory(request.deviceId()))))
+                .flatMap(photoUsageHistory -> {
+                    return photoRepository.findById(request.photoId())
+                            .flatMap(photo -> {
+                                // photoUsageList 내부에 동일한 photoId가 있는지 확인
+                                Optional<PhotoUsage> existingUsage = photoUsageHistory.getPhotoUsageList().stream()
+                                        .filter(usage -> usage.getPhotoId().equals(photo.getId()))
+                                        .findFirst();
+                                if (existingUsage.isPresent()) {
+                                    // 이미 존재하는 경우 lastUsedAt 갱신
+                                    existingUsage.get().setLastUsedAt(LocalDateTime.now());
+                                } else {
+                                    // 존재하지 않으면 새로 추가
+                                    photoUsageHistory.addPhotoUsage(
+                                            photo.getId(),
+                                            LocalDateTime.now(),
+                                            photo.getOriginImageUrl(),
+                                            photo.getGuideImageUrl(),
+                                            photo.getMaskImageUrl()
+                                    );
+                                }
+                                // 갱신된 또는 추가된 photoUsageHistory 저장
+                                return photoUsageHistoryRepository.save(photoUsageHistory);
+                            });
+                }).then();
+
     }
 }

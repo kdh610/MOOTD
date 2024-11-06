@@ -1,7 +1,9 @@
 package com.bwd4.mootd.controller;
 
 import com.bwd4.mootd.common.response.ApiResponse;
+import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
+import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,8 +55,19 @@ public class PhotoController {
                 .map(list -> ResponseEntity.ok(ApiResponse.success("지도 이미지 조회 성공", list)));
     }
 
-    @GetMapping("/{id}")
-    public Mono<String> getImage(@PathVariable String id) {
-        return Mono.just("ok");
+    @Operation(summary = "서버에서 선택한 사진을 사용하며, 기록하기 위한 API", description = "사용여부를 이 api로 등록을 해야만, 최근에 사용한 목록조회 api에서 확인이 가능합니다.")
+    @PostMapping("/usage")
+    public Mono<ResponseEntity<ApiResponse<?>>> photoUsage(@RequestBody PhotoUsageRequestDTO request){
+        return photoService.recordPhotoUsage(request).
+                then(Mono.just(ResponseEntity.ok(ApiResponse.success("성공",null))));
+    }
+
+    @Operation(summary = "최근에 사용한 사진을 조회하는 API")
+    @GetMapping("/recent-usage")
+    public Mono<ResponseEntity<ApiResponse<List<PhotoUsage>>>> getRecentImages(
+            @Parameter(description = "디바이스 고유 id")
+            @RequestParam String deviceId) {
+        return photoService.getRecentUsageByDeviceId(deviceId)
+                .map(list -> ResponseEntity.ok(ApiResponse.success("최근 사용한 이미지 조회 성공", list)));
     }
 }
