@@ -1,5 +1,5 @@
 # Python 베이스 이미지 사용
-FROM python:3.7-slim
+FROM python:3.7.16-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
