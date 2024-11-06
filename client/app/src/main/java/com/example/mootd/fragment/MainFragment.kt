@@ -211,7 +211,7 @@ class MainFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    // PictureResultFragment로 빠르게 이동
+                    // 촬영 완료 시 바로 PictureResultFragment로 전환
                     val bundle = Bundle().apply {
                         putString("photoFilePath", photoFile.absolutePath)
                         putBoolean("isFrontCamera", cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
@@ -223,24 +223,6 @@ class MainFragment : Fragment() {
     }
 
 
-    private suspend fun getRotatedBitmap(filePath: String, isFrontCamera: Boolean): Bitmap {
-        return withContext(Dispatchers.IO) {
-            val bitmap = BitmapFactory.decodeFile(filePath)
-            val exif = ExifInterface(filePath)
-            val rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-            val rotationInDegrees = exifToDegrees(rotation)
-
-            val matrix = Matrix().apply {
-                if (rotationInDegrees != 0) {
-                    postRotate(rotationInDegrees.toFloat())
-                }
-                if (isFrontCamera) {
-                    postScale(-1f, 1f) // 좌우 반전만 적용
-                }
-            }
-            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        }
-    }
 
     private fun exifToDegrees(rotation: Int): Int {
         return when (rotation) {
@@ -251,15 +233,6 @@ class MainFragment : Fragment() {
         }
     }
 
-
-
-    private suspend fun saveRotatedBitmap(file: File, bitmap: Bitmap) {
-        withContext(Dispatchers.IO) {
-            FileOutputStream(file).use { outputStream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            }
-        }
-    }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
