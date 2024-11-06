@@ -27,4 +27,4 @@ RUN pip install git+https://github.com/matterport/Mask_RCNN.git
 COPY . .
 
 # FastAPI 애플리케이션 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "mask_rcnn:app", "--host", "0.0.0.0", "--port", "8000"]
