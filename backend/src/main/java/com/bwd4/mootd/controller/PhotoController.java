@@ -55,14 +55,14 @@ public class PhotoController {
                 .map(list -> ResponseEntity.ok(ApiResponse.success("지도 이미지 조회 성공", list)));
     }
 
-    @Operation(summary = "서버에서 선택한 사진을 사용하며, 기록하기 위한 API", description = "사용여부를 이 api로 등록을 해야만, 최근에 사용한 목록조회 api에서 확인이 가능합니다.")
+    @Operation(summary = "최근 사용 사진 \"등록\" API", description = "사용여부를 이 api로 등록을 해야만, 최근에 사용한 목록조회 api에서 확인이 가능합니다.")
     @PostMapping("/usage")
     public Mono<ResponseEntity<ApiResponse<?>>> photoUsage(@RequestBody PhotoUsageRequestDTO request){
         return photoService.recordPhotoUsage(request).
                 then(Mono.just(ResponseEntity.ok(ApiResponse.success("성공",null))));
     }
 
-    @Operation(summary = "최근에 사용한 사진을 조회하는 API")
+    @Operation(summary = "최근 사용 사진을 \"조회\" 하는 API", description = "최근 사용한 이미지들을 조회합니다. 정렬 순서는 최신순(사용일 기준 내림차순)입니다.")
     @GetMapping("/recent-usage")
     public Mono<ResponseEntity<ApiResponse<List<PhotoUsage>>>> getRecentImages(
             @Parameter(description = "디바이스 고유 id")
