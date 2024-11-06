@@ -5,7 +5,7 @@ FROM python:3.7.16-slim
 WORKDIR /app
 
 # 필수 패키지 설치
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y git\
     gcc \
     g++ \
     build-essential \
