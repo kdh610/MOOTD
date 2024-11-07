@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.bumptech.glide.request.transition.Transition
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions
+import com.example.mootd.api.ResponseData
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -51,7 +53,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             .baseUrl("http://k11a105.p.ssafy.io:8081")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        MapService = retrofit.create(MapService::class.java)
+        mapService = retrofit.create(MapService::class.java)
 
         // Google Maps 초기화
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
@@ -69,12 +71,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun fetchPhotos(latitude: Double, longitude: Double, radius: Int) {
-        MapService.getPhotos(latitude, longitude, radius).enqueue(object : Callback<List<PhotoResponse>> {
-            override fun onResponse(call: Call<List<PhotoResponse>>, response: Response<List<PhotoResponse>>) {
+        mapService.getPhotos(latitude, longitude, radius).enqueue(object : Callback<ResponseData> {
+            override fun onResponse(call: Call<ResponseData>, response: Response<ResponseData>) {
                 if (response.isSuccessful) {
-                    response.body()?.let { photos ->
-                        for (photo in photos) {
-                            addCustomMarker(photo)
+                    response.body()?.let { responseData ->
+                        if (responseData.status == 200) {
+                            Log.d("API Response", "Successfully fetched photos: ${responseData.data.size} photos found")
+                            for (photo in responseData.data) {
+                                Log.d("PhotoResponse", "Received photo ID: ${photo.photoId}, imageUrl: ${photo.maskImageUrl}, latitude: ${photo.latitude}, longitude: ${photo.longitude}")
+                                addCustomMarker(photo)
+                            }
+                        } else {
+                            Toast.makeText(requireContext(), "Error: ${responseData.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else {
@@ -82,7 +90,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
 
-            override fun onFailure(call: Call<List<PhotoResponse>>, t: Throwable) {
+            override fun onFailure(call: Call<ResponseData>, t: Throwable) {
+                Log.e("NetworkError", "Error occurred during network request", t)
                 Toast.makeText(requireContext(), "Error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
@@ -94,22 +103,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // 이미지 다운로드 및 마커 설정
         Glide.with(this)
             .asBitmap()  // 비트맵 형식으로 이미지 로드
-            .load(photo.imageUrl)  // 이미지 URL을 사용하여 로드
+            .load(photo.maskImageUrl)  // 이미지 URL을 사용하여 로드
             .into(object : CustomTarget<Bitmap>() {
                 // 비트맵이 준비되었을 때 호출되는 메서드
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    Log.d("CustomMarker", "Bitmap loaded successfully for photo ID: ${photo.photoId}")
+
+                    val resizedBitmap = Bitmap.createScaledBitmap(resource, 100, 100, false)
                     val markerOptions = MarkerOptions()
                         .position(position)
-                        .icon(BitmapDescriptorFactory.fromBitmap(resource))  // 비트맵을 마커 아이콘으로 설정
-                        .title("Photo ID: ${photo.id}")
+                        .icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap))
+                        .title("Photo ID: ${photo.photoId}")
 
                     // 마커 추가
                     mMap.addMarker(markerOptions)
+                    Log.d("CustomMarker", "Marker added for photo ID: ${photo.photoId}")
                 }
 
                 // Glide가 이미지 로드를 중단할 때 호출되는 메서드
                 override fun onLoadCleared(placeholder: Drawable?) {
+                    Log.d("CustomMarker", "Glide onLoadCleared called for photo ID: ${photo.photoId}")
                     // 이미지 로드가 클리어되었을 때 아무 작업도 하지 않음
+                }
+                override fun onLoadFailed(errorDrawable: Drawable?) {
+                    // 이미지 로드 실패 시 로그 추가
+                    Log.e("CustomMarker", "Failed to load image for photo ID: ${photo.photoId}")
                 }
             })
     }
@@ -138,8 +156,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val currentLatLng = LatLng(location.latitude, location.longitude)
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM))
                     mMap.addMarker(MarkerOptions().position(currentLatLng).title("My Location"))
+                    Log.d("Location", "Fetching photos for location: Latitude = ${location.latitude}, Longitude = ${location.longitude}")
 
-                    fetchPhotos(location.latitude, location.longitude, 5)
+                    fetchPhotos(location.latitude, location.longitude, 10)
                 } else {
                     Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
                 }

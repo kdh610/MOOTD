@@ -10,12 +10,18 @@ interface MapService {
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
         @Query("radius") radius: Int
-    ): Call<List<PhotoResponse>>
+    ): Call<ResponseData>
 }
 
+data class ResponseData(
+    val status: Int,
+    val message: String,
+    val data: List<PhotoResponse>
+)
+
 data class PhotoResponse(
-    val id: String,
-    val imageUrl: String,
+    val photoId: String,
+    val maskImageUrl: String,
     val latitude: Double,
     val longitude: Double
 )
