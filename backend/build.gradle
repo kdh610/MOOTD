@@ -38,6 +38,14 @@ dependencies {
     //s3 설정
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    //메타데이터 추출
+    implementation 'com.drewnoakes:metadata-extractor:2.18.0'
+    //multipartfile
+    implementation 'org.springframework.boot:spring-boot-starter-test'
+    //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+
 }
 
 // SonarQube 설정

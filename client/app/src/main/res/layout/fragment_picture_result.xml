@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".fragment.PictureResultFragment">
 
+
     <!-- 사진 결과 미리보기 -->
     <ImageView
         android:id="@+id/photoPreview"
@@ -35,7 +36,7 @@
             android:layout_height="70dp"
             android:backgroundTint="@color/translate"
             android:contentDescription="Back"
-            android:drawableTop="@drawable/back_button"
+            android:drawableTop="@drawable/icon_back_button"
             android:stateListAnimator="@null"
             android:text="뒤로"
             app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +52,7 @@
             android:background="@drawable/circle_backgroud"
             android:contentDescription="Download button"
             android:scaleType="center"
-            android:src="@drawable/save_button"
+            android:src="@drawable/icon_save_button"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toEndOf="@id/btnBack"
@@ -65,7 +66,7 @@
             android:layout_height="70dp"
             android:backgroundTint="@color/translate"
             android:contentDescription="Share"
-            android:drawableTop="@drawable/share_button"
+            android:drawableTop="@drawable/icon_share_button"
             android:stateListAnimator="@null"
             android:text="공유"
             app:layout_constraintEnd_toEndOf="parent"
@@ -74,4 +75,7 @@
             android:layout_marginEnd="32dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

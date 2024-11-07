@@ -63,7 +63,7 @@ class CreateGuideFragment : Fragment() {
                 saveImageToInternalStorage()
             }
             findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
-            findNavController().navigate(R.id.action_createGuideFragment_to_mainFragment)
+//            findNavController().navigate(R.id.action_createGuideFragment_to_mainFragment)
         }
     }
 
