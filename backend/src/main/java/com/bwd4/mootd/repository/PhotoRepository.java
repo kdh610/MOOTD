@@ -2,6 +2,7 @@ package com.bwd4.mootd.repository;
 
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
+import org.bson.types.ObjectId;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.repository.Query;
@@ -18,9 +19,7 @@ import java.util.List;
 public interface PhotoRepository extends ReactiveMongoRepository<Photo, String> {
     Flux<Photo> findByCoordinatesNear(Point location, Distance radius);
 
-    @Query("{ 'tag': ?0 }")
+
     Flux<Photo> findByTagContaining(String tag);
 
-    @Query("{'name':'?0'}")
-    Mono<Photo> findByName(String name);
 }

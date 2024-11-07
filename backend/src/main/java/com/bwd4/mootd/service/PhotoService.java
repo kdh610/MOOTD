@@ -4,6 +4,7 @@ import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
+import com.bwd4.mootd.dto.response.PhotoDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
 import com.drew.imaging.ImageMetadataReader;
@@ -14,6 +15,7 @@ import com.drew.metadata.Tag;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
@@ -136,15 +138,15 @@ public class PhotoService {
                 ));
     }
 
-    public Flux<Photo> searchTag(String tag){
+    public Flux<PhotoDTO> searchTag(String tag){
 
         return photoRepository.findByTagContaining(tag)
-                .doOnNext(photo -> log.info("Queried photo: {}", photo));
+                .map(Photo::toPhotoDTO);
     }
 
-    public Mono<Photo> searchName(String id){
+    public Mono<Photo> searchId(String id){
 
-        return photoRepository.findByName(id)
+        return photoRepository.findById(id)
                 .doOnNext(photo -> log.info("Fetched photo: {}", photo));
 
     }

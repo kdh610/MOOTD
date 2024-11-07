@@ -1,5 +1,6 @@
 package com.bwd4.mootd.domain;
 
+import com.bwd4.mootd.dto.response.PhotoDTO;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -63,4 +64,24 @@ public class Photo {
     }
 
     // Getters, Setters, Constructors
+
+    /**
+     * Photo를 PhotoDTO로 변환
+     * @return
+     */
+    public PhotoDTO toPhotoDTO(){
+        return PhotoDTO.builder()
+                .id(this.id)
+                .deviceId(this.deviceId)
+                .coordinates(this.coordinates)
+                .tag(this.tag)
+                .createdAt(this.createdAt)
+                .name(this.name)
+                .originImageUrl(this.originImageUrl)
+                .guideImageUrl(this.guideImageUrl)
+                .maskImageUrl(this.maskImageUrl)
+                .flag(this.flag)
+                .build();
+    }
+
 }
