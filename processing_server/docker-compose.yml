@@ -12,5 +12,11 @@ services:
       - .:/app
     environment:
       - ENV=production
-    restart: unless-stopped
-
+    #restart: unless-stopped
+    networks:
+      - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+networks:
+  app-network:
+    driver: bridge
