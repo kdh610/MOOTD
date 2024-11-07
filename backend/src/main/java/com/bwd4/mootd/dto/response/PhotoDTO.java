@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 public class PhotoDTO {
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
-    private Long deviceId;//기계 아이디
+    private String deviceId;//기계 아이디
     private GeoJsonPoint coordinates; // GeoJSON 포인트 타입 사용
     private List<String> tag;//이미지 분석 후 생성되는 태그
     private LocalDateTime createdAt;//촬영시간
