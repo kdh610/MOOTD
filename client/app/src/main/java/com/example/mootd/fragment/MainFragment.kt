@@ -194,7 +194,9 @@ class MainFragment : Fragment(), SensorEventListener {
 
         if (Math.abs(pitch - targetPitch) > threshold || Math.abs(roll - targetRoll) > threshold) {
 
-            Toast.makeText(context, "Adjust camera angle for better alignment.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Adjust camera angle for better alignment.", Toast.LENGTH_SHORT)
+                .show()
+        }
     }
 
     private fun setupGuideButton(button: ImageButton) {
@@ -341,8 +343,6 @@ class MainFragment : Fragment(), SensorEventListener {
     fun hideOverlayImage() {
         binding.overlayImage.visibility = View.GONE
     }
-
-
 
 
 
