@@ -124,14 +124,13 @@ class GalleryFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_READ_EXTERNAL_STORAGE) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-//                setupRecyclerView()
-//                loadGalleryThumbnails()
                 loadGalleryImages()
             } else {
                 Toast.makeText(context, "저장소 접근 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 
     private fun loadGalleryImages() {
         imageList.clear()
