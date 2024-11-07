@@ -52,30 +52,31 @@ public class PhotoService {
     }
 
     public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
+//    public Mono<Void> uploadPhotoLogics(MultipartFile originImageFile, String deviceId, Double latitude, Double longitude) {
+        log.info("in service image upload");
         return Mono.fromCallable(() -> {
                     byte[] fileBytes = request.originImageFile().getBytes();
-
                     MultipartFile copiedFile = new MockMultipartFile(
                             request.originImageFile().getName(),
                             request.originImageFile().getOriginalFilename(),
                             request.originImageFile().getContentType(),
                             fileBytes
                     );
-
                     // 메타정보 추출
                     Map<String, Object> metadata = extractMetadata(new ByteArrayInputStream(fileBytes));
 
                     LocalDateTime createdAt = (LocalDateTime) metadata.get("CaptureTime");
-                    Double latitude = (Double) metadata.get("Latitude");
-                    Double longitude = (Double) metadata.get("Longitude");
-                    log.info(latitude + " " + longitude);
+//                    Double latitude = (Double) metadata.get("Latitude");
+//                    Double longitude = (Double) metadata.get("Longitude");
+                    log.info(request.latitude() + " " + request.longitude());
                     // 이미지 S3 업로드
                     String imageUrl = s3Service.upload(copiedFile, ImageType.ORIGINAL);
-                    return new UploadResult(imageUrl, createdAt, latitude, longitude);
+                    return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
                 })
                 .flatMap(result -> {
                     // MongoDB에 메타정보와 이미지 URL 저장
                     Photo photo = new Photo();
+                    photo.setDeviceId(request.deviceId());
                     photo.setCreatedAt(result.createdAt());
                     photo.setCoordinates(result.longitude(), result.latitude());
                     photo.setOriginImageUrl(result.originImageFile());
