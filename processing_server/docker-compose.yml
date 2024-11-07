@@ -17,6 +17,7 @@ services:
       - app-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    mem_limit: 4g 
 networks:
   app-network:
     driver: bridge
