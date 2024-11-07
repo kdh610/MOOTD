@@ -21,6 +21,8 @@ ENV CUDA_VISIBLE_DEVICES=""
 # 의존성 파일 복사
 COPY requirements.txt .
 
+COPY mask_rcnn_coco.h5 /processing_server/mask_rcnn_coco.h5
+
 # 의존성 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
