@@ -20,7 +20,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.navigation.fragment.findNavController
-import com.example.mootd.api_test.RetrofitInstance
+import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.databinding.FragmentPictureResultBinding
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 import android.content.pm.PackageManager
 import android.location.Location
 import android.Manifest
-import com.example.mootd.api_test.PictureUploadResponse
+import com.example.mootd.api.PictureUploadResponse
 import com.google.gson.Gson
 
 

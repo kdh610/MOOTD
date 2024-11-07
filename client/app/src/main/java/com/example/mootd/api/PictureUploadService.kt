@@ -1,4 +1,4 @@
-package com.example.mootd.api_test
+package com.example.mootd.api
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody

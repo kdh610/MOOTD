@@ -1,4 +1,4 @@
-package com.example.mootd.api_test
+package com.example.mootd.api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
