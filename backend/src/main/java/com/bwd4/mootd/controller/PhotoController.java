@@ -7,6 +7,7 @@ import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,9 +83,8 @@ public class PhotoController {
      * @return
      */
     @GetMapping("/tag")
-    public Mono<ResponseEntity<ApiResponse<List<PhotoDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
         log.info("tag: {}", tag);
-        Flux<PhotoDTO> photoFlux = photoService.searchTag(tag);
 
         return photoService.searchTag(tag)
                 .collectList()
