@@ -81,15 +81,10 @@ public class Photo {
     public PhotoDTO toPhotoDTO(){
         return PhotoDTO.builder()
                 .id(this.id)
-                .deviceId(this.deviceId)
-                .coordinates(this.coordinates)
                 .tag(this.tag)
-                .createdAt(this.createdAt)
-                .name(this.name)
                 .originImageUrl(this.originImageUrl)
                 .guideImageUrl(this.guideImageUrl)
                 .maskImageUrl(this.maskImageUrl)
-                .flag(this.flag)
                 .build();
     }
 

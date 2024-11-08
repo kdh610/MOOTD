@@ -199,6 +199,11 @@ public class PhotoService {
 
     }
 
+    /**
+     * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
+     * @param tag
+     * @return
+     */
     public Flux<PhotoDTO> searchTag(String tag){
 
         return photoRepository.findByTagContaining(tag)
