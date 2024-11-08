@@ -72,7 +72,7 @@ class GuideListFragment : Fragment() {
         // TabLayout과 ViewPager 연결
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "신규 항목"
+                0 -> "내가 생성"
                 else -> "최근 사용"
             }
         }.attach()

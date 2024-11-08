@@ -5,15 +5,20 @@ import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
+import com.bwd4.mootd.domain.Photo;
+import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -33,12 +38,8 @@ public class PhotoController {
     //TODO 촬영 기기의 고유정보를 입력받아야함.
     @Operation(summary = "촬영 후 사진을 서버에 업로드하는 api", description = "촬영 사진을 서버로 업로드 합니다. !! 향후에 안드로이드 기기에서 가이드라인까지 생성한다면 가이드라인도 서버로 전송해야합니다.!!")
     @PostMapping(consumes = "multipart/form-data")
-//    public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@RequestPart @Parameter(description = "업로드할 이미지") MultipartFile originImageFile,
-//                                                                 @RequestPart @Parameter(description = "기기 고유 ID")String deviceId,
-//                                                                 @RequestPart @Parameter(description = "위도") Double latitude,
-//                                                                 @RequestPart @Parameter(description = "경도") Double longitude) {
     public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@ModelAttribute PhotoUploadRequestDTO request) {
-            //1.일단 "OK"d응답 성공을 반환한다.
+        //1.일단 "OK"d응답 성공을 반환한다.
         //2.입력받은 이미지를 S3에 업로드한다.
         //3.입력받은 이미지에서 메타정보를 추출하여, 촬영시간, 위치정보(위도,경도)등을 추출한다.
         log.info("file is null = {}", request.originImageFile().isEmpty());
@@ -75,4 +76,32 @@ public class PhotoController {
         return photoService.getRecentUsageByDeviceId(deviceId)
                 .map(list -> ResponseEntity.ok(ApiResponse.success("최근 사용한 이미지 조회 성공", list)));
     }
+
+    /**
+     * 태그를 검색하면 태그가 포함된 사진데이터를 응답하는 controller
+     * @param tag
+     * @return
+     */
+    @GetMapping("/tag")
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
+        log.info("tag: {}", tag);
+
+        return photoService.searchTag(tag)
+                .collectList()
+                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    @GetMapping("/test2")
+    public Mono<ResponseEntity<ApiResponse<Photo>>> getImageByName(@RequestParam(value = "id") String id) {
+
+        log.info("id: {}", id);
+        return photoService.searchId(id)
+                .map(photo -> {
+                    ApiResponse<Photo> response = ApiResponse.success(photo);
+                    return ResponseEntity.ok(response);
+                })
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(400, "Photo not found",null)));
+    }
+
 }

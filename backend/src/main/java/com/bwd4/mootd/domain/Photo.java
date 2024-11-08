@@ -1,6 +1,9 @@
 package com.bwd4.mootd.domain;
 
+import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -11,6 +14,7 @@ import java.util.List;
 
 @Getter
 @Document(collection = "photo")
+@ToString
 public class Photo {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
@@ -38,7 +42,7 @@ public class Photo {
     private String maskImageUrl;
 
     private Boolean flag;
-    
+
     private Long usageCount; //사용량
 
     public void setName(String name) {
@@ -68,5 +72,36 @@ public class Photo {
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
     }
+
+    // Getters, Setters, Constructors
+
+    /**
+     * Photo를 PhotoDTO로 변환
+     * @return
+     */
+    public PhotoDTO toPhotoDTO(){
+        return PhotoDTO.builder()
+                .id(this.id)
+                .tag(this.tag)
+                .originImageUrl(this.originImageUrl)
+                .guideImageUrl(this.guideImageUrl)
+                .maskImageUrl(this.maskImageUrl)
+                .build();
+    }
+
+    /**
+     * Photo를 TagSearchResponseDTO로 변환
+     * @return
+     */
+    public TagSearchResponseDTO toTagSearchResponseDTO(){
+        return TagSearchResponseDTO.builder()
+                .id(this.id)
+                .tag(this.tag)
+                .originImageUrl(this.originImageUrl)
+                .guideImageUrl(this.guideImageUrl)
+                .maskImageUrl(this.maskImageUrl)
+                .build();
+    }
+
 
 }

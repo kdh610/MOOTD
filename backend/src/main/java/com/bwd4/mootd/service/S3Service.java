@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -41,13 +42,22 @@ public class S3Service {
         if(file.isEmpty() || Objects.isNull(file.getOriginalFilename())) {
             throw new BusinessException(ErrorCode.EMPTY_FILE);
         }
-        return this.uploadImage(file, imageType);
+        return this.uploadImage(file.getInputStream(), file.getOriginalFilename(), file.getSize(), file.getContentType(), imageType);
+    }
+
+    // byte[] 업로드 메서드 (오버로딩)
+    public String upload(byte[] fileData, String originalFilename, ImageType imageType) throws IOException {
+        if (fileData == null || fileData.length == 0 || originalFilename == null) {
+            throw new BusinessException(ErrorCode.EMPTY_FILE);
+        }
+        String contentType = "image/" + originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+        return this.uploadImage(new ByteArrayInputStream(fileData), originalFilename, fileData.length, contentType, imageType);
     }
 
     // 파일 확장자 확인 & S3저장
-    private String uploadImage(MultipartFile file, ImageType imageType) throws IOException {
-        this.validateImageFileExtention(file.getOriginalFilename());
-        return this.uploadImageToS3(file, imageType);
+    private String uploadImage(InputStream inputStream, String originalFilename, long contentLength, String contentType,ImageType imageType) throws IOException {
+        this.validateImageFileExtention(originalFilename);
+        return this.uploadImageToS3(inputStream, originalFilename, contentLength, contentType, imageType);
     }
 
     // 이미지파일이 유효한 확장자인지 확인
@@ -66,17 +76,15 @@ public class S3Service {
     }
 
     // S3에 이미지 저장
-    public String uploadImageToS3(MultipartFile file, ImageType imageType) throws IOException {
-        String originalFilename = file.getOriginalFilename(); //원본 파일 이름
-
+    public String uploadImageToS3(InputStream inputStream, String originalFilename, long contentLength, String contentType, ImageType imageType) throws IOException {
         String fileName = UUID.randomUUID().toString().substring(0,10) + originalFilename;
         String path = imageType+"/"+fileName;
 
         ObjectMetadata objectMetadata = new ObjectMetadata();
-        objectMetadata.setContentType(file.getContentType());
-        objectMetadata.setContentLength(file.getSize());
+        objectMetadata.setContentType(contentType);
+        objectMetadata.setContentLength(contentLength);
 
-        try(InputStream inputStream = file.getInputStream()){
+        try(inputStream){
             amazonS3.putObject(new PutObjectRequest(bucketName, path, inputStream, objectMetadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead));
         }catch (IOException e){
