@@ -18,8 +18,6 @@ def pic_save(image_path):
 
 
 
-
-
 if __name__ == '__main__':
 
     image_path = "meta_clip/docs/bada3.jpg" # 이미지 경로 어케 설정?
