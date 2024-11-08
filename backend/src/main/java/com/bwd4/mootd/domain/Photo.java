@@ -1,6 +1,7 @@
 package com.bwd4.mootd.domain;
 
 import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
@@ -87,5 +88,20 @@ public class Photo {
                 .maskImageUrl(this.maskImageUrl)
                 .build();
     }
+
+    /**
+     * Photo를 TagSearchResponseDTO로 변환
+     * @return
+     */
+    public TagSearchResponseDTO toTagSearchResponseDTO(){
+        return TagSearchResponseDTO.builder()
+                .id(this.id)
+                .tag(this.tag)
+                .originImageUrl(this.originImageUrl)
+                .guideImageUrl(this.guideImageUrl)
+                .maskImageUrl(this.maskImageUrl)
+                .build();
+    }
+
 
 }
