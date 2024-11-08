@@ -18,6 +18,7 @@ import android.media.ExifInterface
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -38,6 +39,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
+import com.example.mootd.api.RecentUsageResponse
+import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.databinding.FragmentMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +54,9 @@ import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 class MainFragment : Fragment(), SensorEventListener {
@@ -67,20 +73,14 @@ class MainFragment : Fragment(), SensorEventListener {
     private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var guideAdapter: GuideAdapter
+
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-    private val guideImageList = listOf(
-        // 여기에 이미지 URI 또는 리소스 ID를 추가
-        "https://files.oaiusercontent.com/file-10O9HgJOXxh7EYcHygK3YG6c?se=2024-11-04T06%3A14%3A37Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D186fb974-e227-4c14-a26a-cf4c426f1bbd.webp&sig=XByrKnyaQdCRKOzX8erxZwhssV4gEXJa7oES/VCJG4U%3D",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg"
-    )
+
 
 
     override fun onCreateView(
@@ -120,7 +120,7 @@ class MainFragment : Fragment(), SensorEventListener {
         binding.btnGuide.setOnClickListener {
             // 가로 스크롤 사진 목록 보이기
             binding.horizontalLayout.visibility = View.VISIBLE
-            setupHorizontalRecyclerView() // 가로 스크롤 RecyclerView 설정
+            fetchAndDisplayGuideImages() // 가로 스크롤 RecyclerView 설정
         }
 
 
@@ -128,10 +128,8 @@ class MainFragment : Fragment(), SensorEventListener {
             findNavController().navigate(R.id.action_mainFragment_to_guideListFragment)
         }
 
-        binding.btnCloseHorizontalLayout.setOnClickListener{
-            binding.horizontalLayout.post {
-                binding.horizontalLayout.visibility = View.GONE
-            }
+        binding.btnCloseHorizontalLayout.setOnClickListener {
+            binding.horizontalLayout.visibility = View.GONE
         }
 
         binding.btnCloseHorizontalLayout.post {
@@ -206,13 +204,40 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
-    private fun setupHorizontalRecyclerView() {
+    fun getDeviceId(context: Context): String {
+        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    }
+
+    private fun fetchAndDisplayGuideImages() {
+        val deviceId = getDeviceId(requireContext())
+
+        val call = RetrofitInstance.guideRecentService.getRecentUsagePhotos(deviceId)
+        call.enqueue(object : Callback<RecentUsageResponse> {
+            override fun onResponse(call: Call<RecentUsageResponse>, response: Response<RecentUsageResponse>) {
+                if (response.isSuccessful) {
+                    val maskImageUrls = response.body()?.data?.mapNotNull { it.originImageUrl } ?: emptyList()
+//                    val maskImageUrls = response.body()?.data?.mapNotNull { it.maskImageUrl } ?: emptyList()
+                    setupHorizontalRecyclerView(maskImageUrls) // RecyclerView 설정
+                } else {
+                    Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<RecentUsageResponse>, t: Throwable) {
+                Log.e("API ERROR", "Network error: ${t.message}")
+                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    private fun setupHorizontalRecyclerView(imageList: List<String>) {
+        guideAdapter = GuideAdapter(imageList, R.layout.item_guide_image) { imageUri ->
+            Log.d("MainFragment", "Image clicked: $imageUri")
+        }
+
         binding.horizontalRecyclerView.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = GuideAdapter(guideImageList, R.layout.item_guide_image) { imageUri ->
-
-                println("Image clicked: $imageUri")
-            }
+            adapter = guideAdapter
             setHasFixedSize(true)
         }
     }

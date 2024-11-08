@@ -37,12 +37,8 @@ public class PhotoController {
     //TODO 촬영 기기의 고유정보를 입력받아야함.
     @Operation(summary = "촬영 후 사진을 서버에 업로드하는 api", description = "촬영 사진을 서버로 업로드 합니다. !! 향후에 안드로이드 기기에서 가이드라인까지 생성한다면 가이드라인도 서버로 전송해야합니다.!!")
     @PostMapping(consumes = "multipart/form-data")
-//    public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@RequestPart @Parameter(description = "업로드할 이미지") MultipartFile originImageFile,
-//                                                                 @RequestPart @Parameter(description = "기기 고유 ID")String deviceId,
-//                                                                 @RequestPart @Parameter(description = "위도") Double latitude,
-//                                                                 @RequestPart @Parameter(description = "경도") Double longitude) {
     public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@ModelAttribute PhotoUploadRequestDTO request) {
-            //1.일단 "OK"d응답 성공을 반환한다.
+        //1.일단 "OK"d응답 성공을 반환한다.
         //2.입력받은 이미지를 S3에 업로드한다.
         //3.입력받은 이미지에서 메타정보를 추출하여, 촬영시간, 위치정보(위도,경도)등을 추출한다.
         log.info("file is null = {}", request.originImageFile().isEmpty());
