@@ -5,15 +5,19 @@ import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
+import com.bwd4.mootd.domain.Photo;
+import com.bwd4.mootd.dto.response.PhotoDTO;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -71,4 +75,33 @@ public class PhotoController {
         return photoService.getRecentUsageByDeviceId(deviceId)
                 .map(list -> ResponseEntity.ok(ApiResponse.success("최근 사용한 이미지 조회 성공", list)));
     }
+
+    /**
+     * 태그를 검색하면 태그가 포함된 사진데이터를 응답
+     * @param tag
+     * @return
+     */
+    @GetMapping("/tag")
+    public Mono<ResponseEntity<ApiResponse<List<PhotoDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
+        log.info("tag: {}", tag);
+        Flux<PhotoDTO> photoFlux = photoService.searchTag(tag);
+
+        return photoService.searchTag(tag)
+                .collectList()
+                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    @GetMapping("/test2")
+    public Mono<ResponseEntity<ApiResponse<Photo>>> getImageByName(@RequestParam(value = "id") String id) {
+
+        log.info("id: {}", id);
+        return photoService.searchId(id)
+                .map(photo -> {
+                    ApiResponse<Photo> response = ApiResponse.success(photo);
+                    return ResponseEntity.ok(response);
+                })
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(400, "Photo not found",null)));
+    }
+
 }

@@ -42,6 +42,11 @@ class GuideAdapter(
         }
     }
 
+    fun updateData(newImageList: List<String>) {
+        imageList = newImageList
+        notifyDataSetChanged()
+    }
+
     override fun getItemCount(): Int = imageList.size
 
     inner class GuideViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
