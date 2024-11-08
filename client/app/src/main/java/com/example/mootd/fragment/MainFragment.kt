@@ -147,6 +147,10 @@ class MainFragment : Fragment(), SensorEventListener {
         setupGuideButton(binding.btnPersonGuide)
         setupGuideButton(binding.btnBackgroundGuide)
 
+        binding.btnSearch.setOnClickListener{
+         findNavController().navigate(R.id.action_mainFragment_to_searchFragment)
+        }
+
 
     }
 
