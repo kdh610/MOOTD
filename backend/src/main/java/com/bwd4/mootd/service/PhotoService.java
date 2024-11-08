@@ -8,6 +8,7 @@ import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
 import com.bwd4.mootd.repository.PhotoUsageHistoryRepository;
@@ -204,10 +205,10 @@ public class PhotoService {
      * @param tag
      * @return
      */
-    public Flux<PhotoDTO> searchTag(String tag){
+    public Flux<TagSearchResponseDTO> searchTag(String tag){
 
         return photoRepository.findByTagContaining(tag)
-                .map(Photo::toPhotoDTO);
+                .map(Photo::toTagSearchResponseDTO);
     }
 
     public Mono<Photo> searchId(String id){
