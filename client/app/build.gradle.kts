@@ -89,6 +89,7 @@ dependencies {
     // Google Map
     implementation ("com.google.android.gms:play-services-maps:17.0.0")
     implementation ("com.google.android.gms:play-services-location:17.0.0")
+    implementation ("com.google.maps.android:android-maps-utils:3.8.0")
 
     // Glide
     implementation ("com.github.bumptech.glide:glide:4.15.0")
@@ -107,5 +108,7 @@ dependencies {
     implementation ("com.squareup.okhttp3:okhttp:4.11.0")
     // OkHttp Logging Interceptor (로그 출력용)
     implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+
 
 }

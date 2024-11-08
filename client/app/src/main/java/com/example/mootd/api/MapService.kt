@@ -23,5 +23,6 @@ data class PhotoResponse(
     val photoId: String,
     val maskImageUrl: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val imageUrls: List<String>
 )

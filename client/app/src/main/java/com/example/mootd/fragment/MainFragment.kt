@@ -47,15 +47,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import org.pytorch.IValue
-import org.pytorch.Module
-import org.pytorch.Tensor
-import org.pytorch.torchvision.TensorImageUtils
 
 
 class MainFragment : Fragment(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
-    private lateinit var module: Module
     private var rotationSensor: Sensor? = null
 
     // 목표 각도와 임계값 설정
