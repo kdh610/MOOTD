@@ -13,6 +13,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.mootd.R
@@ -30,16 +32,18 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.bumptech.glide.request.transition.Transition
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions
 import com.example.mootd.api.ResponseData
+import com.example.mootd.api.RetrofitInstance
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.google.maps.android.clustering.ClusterItem
+import com.google.maps.android.clustering.ClusterManager
+
 
 class MapFragment : Fragment(), OnMapReadyCallback {
-    private lateinit var mapService: MapService
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var clusterManager: ClusterManager<PhotoClusterItem>
 
 
     override fun onCreateView(
@@ -49,15 +53,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val view = inflater.inflate(R.layout.fragment_map, container, false)
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://k11a105.p.ssafy.io:8081")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        mapService = retrofit.create(MapService::class.java)
 
-        // Google Maps 초기화
+        // 지도 초기화
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
 
         // FusedLocationProviderClient 초기화
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
@@ -67,18 +67,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+
+        // 클러스터 매니저 초기화
+        clusterManager = ClusterManager(requireContext(), mMap)
+        mMap.setOnCameraIdleListener(clusterManager)
+        mMap.setOnMarkerClickListener(clusterManager)
+
         enableMyLocation()
     }
 
     private fun fetchPhotos(latitude: Double, longitude: Double, radius: Int) {
-        mapService.getPhotos(latitude, longitude, radius).enqueue(object : Callback<ResponseData> {
+        RetrofitInstance.mapService.getPhotos(latitude, longitude, radius).enqueue(object : Callback<ResponseData> {
             override fun onResponse(call: Call<ResponseData>, response: Response<ResponseData>) {
                 if (response.isSuccessful) {
                     response.body()?.let { responseData ->
                         if (responseData.status == 200) {
                             Log.d("API Response", "Successfully fetched photos: ${responseData.data.size} photos found")
                             for (photo in responseData.data) {
-                                Log.d("PhotoResponse", "Received photo ID: ${photo.photoId}, imageUrl: ${photo.maskImageUrl}, latitude: ${photo.latitude}, longitude: ${photo.longitude}")
                                 addCustomMarker(photo)
                             }
                         } else {
@@ -109,15 +114,20 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     Log.d("CustomMarker", "Bitmap loaded successfully for photo ID: ${photo.photoId}")
 
-                    val resizedBitmap = Bitmap.createScaledBitmap(resource, 100, 100, false)
-                    val markerOptions = MarkerOptions()
-                        .position(position)
-                        .icon(BitmapDescriptorFactory.fromBitmap(resizedBitmap))
-                        .title("Photo ID: ${photo.photoId}")
+                    // 클러스터 아이템 생성
+                    val clusterItem = PhotoClusterItem(
+                        position,
+                        "Photo ID: ${photo.photoId}",
+                        "Latitude: ${photo.latitude}, Longitude: ${photo.longitude}",
+                        photo.maskImageUrl
+                    )
 
-                    // 마커 추가
-                    mMap.addMarker(markerOptions)
-                    Log.d("CustomMarker", "Marker added for photo ID: ${photo.photoId}")
+                    // 클러스터 매니저에 아이템 추가
+                    clusterManager.addItem(clusterItem)
+
+                    // 클러스터 업데이트
+                    clusterManager.cluster()
+                    Log.d("CustomMarker", "Cluster item added for photo ID: ${photo.photoId}")
                 }
 
                 // Glide가 이미지 로드를 중단할 때 호출되는 메서드
@@ -157,7 +167,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM))
                     mMap.addMarker(MarkerOptions().position(currentLatLng).title("My Location"))
                     Log.d("Location", "Fetching photos for location: Latitude = ${location.latitude}, Longitude = ${location.longitude}")
-
                     fetchPhotos(location.latitude, location.longitude, 10)
                 } else {
                     Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
@@ -168,6 +177,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Toast.makeText(requireContext(), "Location access error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,

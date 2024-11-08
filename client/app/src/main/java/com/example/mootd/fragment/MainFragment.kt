@@ -61,7 +61,6 @@ import retrofit2.Response
 
 class MainFragment : Fragment(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
-    private lateinit var module: Module
     private var rotationSensor: Sensor? = null
 
     // 목표 각도와 임계값 설정
