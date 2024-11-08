@@ -151,7 +151,7 @@ public class PhotoService {
         return photoRepository.findByCoordinatesNear(location, radius)
                 .map(photo -> new MapResponseDTO(
                         photo.getId(),
-                        photo.getOriginImageUrl(),
+                        photo.getMaskImageUrl(),
                         photo.getCoordinates().getY(),  // latitude
                         photo.getCoordinates().getX()   // longitude
                 ));
