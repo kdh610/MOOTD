@@ -23,3 +23,6 @@ cloud:
 springdoc:
   swagger-ui:
     path: swagger
+
+ai:
+  host: ${HOST}

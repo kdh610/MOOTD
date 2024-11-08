@@ -1,6 +1,7 @@
 package com.bwd4.mootd.domain;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Getter
 @Document(collection = "photo")
+@ToString
 public class Photo {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
