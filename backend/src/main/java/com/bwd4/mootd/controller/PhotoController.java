@@ -6,19 +6,16 @@ import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.domain.Photo;
-import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -89,6 +86,12 @@ public class PhotoController {
         return photoService.searchTag(tag)
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    @GetMapping("/{photoId}")
+    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(@PathVariable("photoId") String photoId) {
+        return photoService.findPhotoDetail(photoId)
+                .map(photoDetail -> ResponseEntity.ok(ApiResponse.success("photo 단일 조회 성공", photoDetail)));
     }
 
     @GetMapping("/test2")

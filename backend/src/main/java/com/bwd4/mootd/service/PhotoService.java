@@ -1,5 +1,6 @@
 package com.bwd4.mootd.service;
 
+import com.bwd4.mootd.common.response.ApiResponse;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.domain.PhotoUsageHistory;
@@ -8,6 +9,7 @@ import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
@@ -24,12 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import org.springframework.mock.web.MockMultipartFile;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -56,7 +60,6 @@ public class PhotoService {
     }
 
     public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
-        log.info("in service image upload");
         return Mono.fromCallable(() -> {
                     byte[] fileBytes = request.originImageFile().getBytes();
                     MultipartFile copiedFile = new MockMultipartFile(
@@ -72,7 +75,7 @@ public class PhotoService {
                     log.info(request.latitude() + " " + request.longitude());
                     // 이미지 S3 업로드
 //                    String imageUrl = s3Service.upload(copiedFile, ImageType.ORIGINAL);
-                    String imageUrl = s3Service.upload(fileBytes,"파일명.png", ImageType.ORIGINAL);
+                    String imageUrl = s3Service.upload(fileBytes, "파일명.png", ImageType.ORIGINAL);
 
                     //마스크 처리
                     return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
@@ -144,6 +147,7 @@ public class PhotoService {
         }
         return metadataMap;
     }
+
     /**
      * 위도, 경도를 기반으로 반경(radius)에 존재하는 이미지를 반환한다.
      */
@@ -202,16 +206,17 @@ public class PhotoService {
 
     /**
      * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
+     *
      * @param tag
      * @return
      */
-    public Flux<TagSearchResponseDTO> searchTag(String tag){
+    public Flux<TagSearchResponseDTO> searchTag(String tag) {
 
         return photoRepository.findByTagContaining(tag)
                 .map(Photo::toTagSearchResponseDTO);
     }
 
-    public Mono<Photo> searchId(String id){
+    public Mono<Photo> searchId(String id) {
 
         return photoRepository.findById(id)
                 .doOnNext(photo -> log.info("Fetched photo: {}", photo));
@@ -219,4 +224,12 @@ public class PhotoService {
     }
 
 
+    public Mono<PhotoDetailDTO> findPhotoDetail(String photoId) {
+        return photoRepository.findById(photoId)
+                .map(photo ->  new PhotoDetailDTO(photo.getId(),
+                                photo.getMaskImageUrl(),
+                                photo.getCoordinates().getY(),
+                                photo.getCoordinates().getX())
+                );
+    }
 }
