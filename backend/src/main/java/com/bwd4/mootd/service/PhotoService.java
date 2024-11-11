@@ -7,6 +7,8 @@ import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
+import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
 import com.bwd4.mootd.repository.PhotoUsageHistoryRepository;
@@ -42,17 +44,18 @@ public class PhotoService {
     private final S3Service s3Service; // S3 업로드용 서비스
     private final Scheduler asyncScheduler; // 비동기 스케줄러 주입
     private final PhotoUsageHistoryRepository photoUsageHistoryRepository;
+    private final AIService aiService;
 
     @Autowired
-    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler, PhotoUsageHistoryRepository photoUsageHistoryRepository) {
+    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler, PhotoUsageHistoryRepository photoUsageHistoryRepository, AIService aiService) {
         this.photoRepository = photoRepository;
         this.s3Service = s3Service;
         this.asyncScheduler = asyncScheduler;
         this.photoUsageHistoryRepository = photoUsageHistoryRepository;
+        this.aiService = aiService;
     }
 
     public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
-//    public Mono<Void> uploadPhotoLogics(MultipartFile originImageFile, String deviceId, Double latitude, Double longitude) {
         log.info("in service image upload");
         return Mono.fromCallable(() -> {
                     byte[] fileBytes = request.originImageFile().getBytes();
@@ -66,22 +69,38 @@ public class PhotoService {
                     Map<String, Object> metadata = extractMetadata(new ByteArrayInputStream(fileBytes));
 
                     LocalDateTime createdAt = (LocalDateTime) metadata.get("CaptureTime");
-//                    Double latitude = (Double) metadata.get("Latitude");
-//                    Double longitude = (Double) metadata.get("Longitude");
                     log.info(request.latitude() + " " + request.longitude());
                     // 이미지 S3 업로드
-                    String imageUrl = s3Service.upload(copiedFile, ImageType.ORIGINAL);
+//                    String imageUrl = s3Service.upload(copiedFile, ImageType.ORIGINAL);
+                    String imageUrl = s3Service.upload(fileBytes,"파일명.png", ImageType.ORIGINAL);
+
+                    //마스크 처리
                     return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
                 })
-                .flatMap(result -> {
-                    // MongoDB에 메타정보와 이미지 URL 저장
-                    Photo photo = new Photo();
-                    photo.setDeviceId(request.deviceId());
-                    photo.setCreatedAt(result.createdAt());
-                    photo.setCoordinates(result.longitude(), result.latitude());
-                    photo.setOriginImageUrl(result.originImageFile());
-                    return photoRepository.save(photo).then();
-                })
+                .flatMap(result ->
+                        // 마스크 처리
+                        aiService.maskImage(result.originImageUrl())
+                                .flatMap(maskBytes -> {
+                                    // 마스크 이미지를 S3에 업로드
+                                    return Mono.fromCallable(() -> {
+                                                return s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING);
+                                            })
+                                            .flatMap(maskUrl -> {
+                                                // MongoDB에 메타정보와 이미지 URL 저장
+                                                Photo photo = new Photo();
+                                                photo.setDeviceId(request.deviceId());
+                                                photo.setCreatedAt(result.createdAt());
+                                                photo.setCoordinates(result.longitude(), result.latitude());
+                                                photo.setOriginImageUrl(result.originImageUrl());
+                                                photo.setMaskImageUrl(maskUrl);
+
+                                                return photoRepository.save(photo)
+                                                        .doOnSuccess(savedPhoto -> log.info("MongoDB에 저장된 Photo 객체: {}", savedPhoto))
+                                                        .doOnError(error -> log.error("MongoDB 저장 중 오류 발생: ", error))
+                                                        .then();
+                                            });
+                                })
+                )
                 .doOnSuccess(v -> log.info("이미지 저장 완료"))
                 .doOnError(error -> log.error("오류 발생: ", error))
                 .subscribeOn(asyncScheduler);
@@ -134,7 +153,7 @@ public class PhotoService {
         return photoRepository.findByCoordinatesNear(location, radius)
                 .map(photo -> new MapResponseDTO(
                         photo.getId(),
-                        photo.getOriginImageUrl(),
+                        photo.getMaskImageUrl(),
                         photo.getCoordinates().getY(),  // latitude
                         photo.getCoordinates().getX()   // longitude
                 ));
@@ -180,4 +199,24 @@ public class PhotoService {
                 }).then();
 
     }
+
+    /**
+     * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
+     * @param tag
+     * @return
+     */
+    public Flux<TagSearchResponseDTO> searchTag(String tag){
+
+        return photoRepository.findByTagContaining(tag)
+                .map(Photo::toTagSearchResponseDTO);
+    }
+
+    public Mono<Photo> searchId(String id){
+
+        return photoRepository.findById(id)
+                .doOnNext(photo -> log.info("Fetched photo: {}", photo));
+
+    }
+
+
 }

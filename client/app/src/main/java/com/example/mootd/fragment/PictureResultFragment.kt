@@ -210,35 +210,35 @@ class PictureResultFragment : Fragment() {
         val requestBodyDeviceId = RequestBody.create("text/plain".toMediaTypeOrNull(), deviceId)
         val requestBodyLatitude = RequestBody.create("text/plain".toMediaTypeOrNull(), latitude.toString())
         val requestBodyLongitude = RequestBody.create("text/plain".toMediaTypeOrNull(), longitude.toString())
-
-        Log.d("Upload Request", "Check Console originImageFile: ${file.name}")
-        Log.d("Upload Request", "Check Console deviceId: $deviceId")
-        Log.d("Upload Request", "Check Console latitude: $latitude")
-        Log.d("Upload Request", "Check Console longitude: $longitude")
+//
+//        Log.d("Upload Request", "Check Console originImageFile: ${file.name}")
+//        Log.d("Upload Request", "Check Console deviceId: $deviceId")
+//        Log.d("Upload Request", "Check Console latitude: $latitude")
+//        Log.d("Upload Request", "Check Console longitude: $longitude")
 
         val call = RetrofitInstance.pictureUploadResponse.uploadPhoto(imagePart, requestBodyDeviceId, requestBodyLatitude, requestBodyLongitude)
         call.enqueue(object : Callback<PictureUploadResponse<String>> {
             override fun onResponse(call: Call<PictureUploadResponse<String>>, response: Response<PictureUploadResponse<String>>) {
-                if (isAdded) {  // Fragment가 Context에 연결된 상태인지 확인
-                    if (response.isSuccessful) {
-                        Log.d("API Response", "Check Console Upload successful: ${response.body()}")
-                        Log.d("API Response Success", "Check Console Response Code: ${response.code()}")
-                        Log.d("API Response Success", "Check Console Response Body: ${Gson().toJson(response.body())}")
-                        Toast.makeText(requireContext(), "업로드 성공", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Log.d("API Response", "Check Console Upload failed: ${response.errorBody()?.string()}")
-                        Log.d("API Response Failure", "Check Console Response Code: ${response.code()}")
-                        Log.d("API Response Failure", "Check Console Error Body: ${response.errorBody()?.string()}")
-                        Toast.makeText(requireContext(), "업로드 실패: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
-                    }
-                }
+//                if (isAdded) {  // Fragment가 Context에 연결된 상태인지 확인
+//                    if (response.isSuccessful) {
+//                        Log.d("API Response", "Check Console Upload successful: ${response.body()}")
+//                        Log.d("API Response Success", "Check Console Response Code: ${response.code()}")
+//                        Log.d("API Response Success", "Check Console Response Body: ${Gson().toJson(response.body())}")
+//                        Toast.makeText(requireContext(), "업로드 성공", Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        Log.d("API Response", "Check Console Upload failed: ${response.errorBody()?.string()}")
+//                        Log.d("API Response Failure", "Check Console Response Code: ${response.code()}")
+//                        Log.d("API Response Failure", "Check Console Error Body: ${response.errorBody()?.string()}")
+//                        Toast.makeText(requireContext(), "업로드 실패: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
             }
 
             override fun onFailure(call: Call<PictureUploadResponse<String>>, t: Throwable) {
-                if (isAdded) {  // Fragment가 Context에 연결된 상태인지 확인
-                    Log.e("API Error", "Check Console Network error: ${t.message}")
-                    Toast.makeText(requireContext(), "네트워크 오류 발생: ${t.message}", Toast.LENGTH_SHORT).show()
-                }
+//                if (isAdded) {  // Fragment가 Context에 연결된 상태인지 확인
+//                    Log.e("API Error", "Check Console Network error: ${t.message}")
+//                    Toast.makeText(requireContext(), "네트워크 오류 발생: ${t.message}", Toast.LENGTH_SHORT).show()
+//                }
             }
         })
     }

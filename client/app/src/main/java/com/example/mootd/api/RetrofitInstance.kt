@@ -29,4 +29,33 @@ object RetrofitInstance {
             .build()
             .create(PictureUploadService::class.java)
     }
+    
+    val mapService: MapService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(MapService::class.java)
+    }
+
+
+    val guideRecentService: GuideRecentService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GuideRecentService::class.java)
+    }
+
+    val guideSearchService: GuideSearchService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GuideSearchService::class.java)
+    }
+
 }
