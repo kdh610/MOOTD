@@ -35,8 +35,10 @@ class GuideDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val imageId = arguments?.getString("imageId")
+        val photoId = arguments?.getString("photoId")
         val imageUrl = arguments?.getString("imageUrl")
+
+        Log.d("argument check okhttp", "guide detail argument id: ${photoId}")
 
         imageUrl?.let {
             Glide.with(this).load(it).into(binding.imageView)
@@ -48,12 +50,12 @@ class GuideDetailFragment : Fragment() {
 
         binding.cameraButton.setOnClickListener{
             val deviceId = getDeviceId()
-            if (deviceId != null && imageId != null) {
-                postUsageData(deviceId, imageId)
+            if (deviceId != null && photoId != null) {
+                postUsageData(deviceId, photoId)
             }
 
             val bundle = Bundle().apply {
-                putString("imageId", imageId)
+                putString("photoId", photoId)
                 putBoolean("hasGuide", true)
             }
             findNavController().navigate(R.id.action_guideDetailFragment_to_mainFragment, bundle)

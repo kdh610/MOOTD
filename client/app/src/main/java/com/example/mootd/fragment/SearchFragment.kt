@@ -97,9 +97,9 @@ class SearchFragment : Fragment() {
 
                     if (photoList.isNotEmpty()) {
                         // 검색 결과가 있을 때
-                        galleryAdapter = GalleryAdapter(photoList) { imageId, imageUrl ->
+                        galleryAdapter = GalleryAdapter(photoList) { photoId, imageUrl ->
                             val bundle = Bundle().apply {
-                                putString("imageId", imageId)
+                                putString("photoId", photoId)
                                 putString("imageUrl", imageUrl)
                             }
                             findNavController().navigate(R.id.action_searchFragment_to_guideDetailFragment, bundle)
