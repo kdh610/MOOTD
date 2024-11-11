@@ -28,6 +28,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
 import android.widget.ToggleButton
+import androidx.activity.addCallback
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -37,8 +38,10 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
+import com.example.mootd.api.GuideDetailResponse
 import com.example.mootd.api.RecentUsageResponse
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.databinding.FragmentMainBinding
@@ -79,6 +82,10 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+    private var maskImageUrl: String? = null
+    private var guideImageUrl: String? = null
+    private var backgroundGuideImageUrl: String? = null
+
 
 
 
@@ -91,14 +98,21 @@ class MainFragment : Fragment(), SensorEventListener {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
-        findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
-            Log.d("MainFragment", "Overlay Image Path?: $imagePath")
-            // imagePath를 통해 오버레이 이미지 설정
-            imagePath?.let {
-                showOverlayImage(imagePath)
-            }
+
+        // Main에서는 무조건 뒤로가기 누르면 앱 꺼지게
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            requireActivity().finish() // 앱 종료
         }
+
+
+        // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
+//        findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
+//            Log.d("MainFragment", "Overlay Image Path?: $imagePath")
+//            // imagePath를 통해 오버레이 이미지 설정
+//            imagePath?.let {
+//                showOverlayImage(imagePath)
+//            }
+//        }
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -106,6 +120,23 @@ class MainFragment : Fragment(), SensorEventListener {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
+        val imageId = arguments?.getString("imageId")
+        imageId?.let {
+            fetchGuideData(it)
+        }
+        val hasGuide = arguments?.getBoolean("hasGuide", false) ?: false
+        if (hasGuide) {
+            binding.btnOriginalGuide.isSelected = true
+            binding.btnOriginalGuide.visibility = View.VISIBLE
+            binding.btnPersonGuide.visibility = View.VISIBLE
+            binding.btnBackgroundGuide.visibility = View.VISIBLE
+        } else {
+            binding.btnOriginalGuide.visibility = View.GONE
+            binding.btnPersonGuide.visibility = View.GONE
+            binding.btnBackgroundGuide.visibility = View.GONE
+        }
+
+        setupGuideButton()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -142,9 +173,7 @@ class MainFragment : Fragment(), SensorEventListener {
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
-        setupGuideButton(binding.btnOriginalGuide)
-        setupGuideButton(binding.btnPersonGuide)
-        setupGuideButton(binding.btnBackgroundGuide)
+
 
         binding.btnSearch.setOnClickListener{
          findNavController().navigate(R.id.action_mainFragment_to_searchFragment)
@@ -170,9 +199,6 @@ class MainFragment : Fragment(), SensorEventListener {
             // 회전 행렬 계산
             val rotationMatrix = FloatArray(9)
             val orientation = FloatArray(3)
-
-//            // 회전 행렬 계산
-//            SensorManager.getRotationMatrixFromOrientation(event.values, rotationMatrix)
 
             // 방향 정보 가져오기
             SensorManager.getOrientation(rotationMatrix, orientation)
@@ -200,10 +226,20 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
-    private fun setupGuideButton(button: ImageButton) {
-        button.setOnClickListener {
-            // 선택 상태 토글
-            button.isSelected = !button.isSelected
+    private fun setupGuideButton() {
+        binding.btnOriginalGuide.setOnClickListener {
+            binding.btnOriginalGuide.isSelected = !binding.btnOriginalGuide.isSelected
+            updateOverlayImages()
+        }
+
+        binding.btnPersonGuide.setOnClickListener {
+            binding.btnPersonGuide.isSelected = !binding.btnPersonGuide.isSelected
+            updateOverlayImages()
+        }
+
+        binding.btnBackgroundGuide.setOnClickListener {
+            binding.btnBackgroundGuide.isSelected = !binding.btnBackgroundGuide.isSelected
+            updateOverlayImages()
         }
     }
 
@@ -321,16 +357,6 @@ class MainFragment : Fragment(), SensorEventListener {
 
 
 
-    private fun exifToDegrees(rotation: Int): Int {
-        return when (rotation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> 90
-            ExifInterface.ORIENTATION_ROTATE_180 -> 180
-            ExifInterface.ORIENTATION_ROTATE_270 -> 270
-            else -> 0
-        }
-    }
-
-
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
@@ -354,24 +380,81 @@ class MainFragment : Fragment(), SensorEventListener {
             }
         }.toTypedArray()
     }
+//
+//    fun showOverlayImage(imagePath: String) {
+//        Log.d("MainFragment", "showOverlayImage called with path: $imagePath")
+//        val bitmap = BitmapFactory.decodeFile(imagePath)
+//
+//        if (bitmap != null) {
+//            Log.d("MainFragment", "Loading image from path: $imagePath")
+//            binding.overlayImage.setImageBitmap(bitmap)
+//            binding.overlayImage.visibility = View.VISIBLE
+//        } else {
+//            Log.e("MainFragment", "Failed to load image: Bitmap is null for path $imagePath")
+//        }
+//    }
+//
+//    fun hideOverlayImage() {
+//        binding.overlayImage.visibility = View.GONE
+//    }
 
-    fun showOverlayImage(imagePath: String) {
-        Log.d("MainFragment", "showOverlayImage called with path: $imagePath")
-        val bitmap = BitmapFactory.decodeFile(imagePath)
+    fun fetchGuideData(imageId: String) {
+        val call = RetrofitInstance.guideDetailService.getPhotoData(imageId)
+        call.enqueue(object : Callback<GuideDetailResponse> {
+            override fun onResponse(call: Call<GuideDetailResponse>, response: Response<GuideDetailResponse>) {
+                if (response.isSuccessful) {
+//                    maskImageUrl = response.body()?.data?.maskImageUrl
+                    maskImageUrl = "https://mootdbucket.s3.ap-northeast-2.amazonaws.com/ORIGINAL/5c72bd20-0%ED%95%9C%EA%B0%95.jpg"
+                    guideImageUrl = response.body()?.data?.guideImageUrl
+                    backgroundGuideImageUrl = ""
+                    updateOverlayImages() // 초기 오버레이 업데이트
+                } else {
+                    Log.e("API ERROR", "Response code: ${response.code()}")
+                }
+            }
 
-        if (bitmap != null) {
-            Log.d("MainFragment", "Loading image from path: $imagePath")
-            binding.overlayImage.setImageBitmap(bitmap)
-            binding.overlayImage.visibility = View.VISIBLE
+            override fun onFailure(call: Call<GuideDetailResponse>, t: Throwable) {
+                Log.e("API ERROR", "Network error: ${t.message}")
+                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+    }
+
+    fun updateOverlayImages() {
+        if (binding.btnOriginalGuide.isSelected) {
+            maskImageUrl?.let { url ->
+                Glide.with(this)
+                    .load(url)
+                    .into(binding.overlayOriginalGuide)
+                binding.overlayOriginalGuide.visibility = View.VISIBLE
+            }
         } else {
-            Log.e("MainFragment", "Failed to load image: Bitmap is null for path $imagePath")
+            binding.overlayOriginalGuide.visibility = View.GONE
+        }
+
+        if (binding.btnPersonGuide.isSelected) {
+            guideImageUrl?.let { url ->
+                Glide.with(this)
+                    .load(url)
+                    .into(binding.overlayPersonGuide)
+                binding.overlayPersonGuide.visibility = View.VISIBLE
+            }
+        } else {
+            binding.overlayPersonGuide.visibility = View.GONE
+        }
+
+        if (binding.btnBackgroundGuide.isSelected) {
+            backgroundGuideImageUrl?.let { url ->
+                Glide.with(this)
+                    .load(url)
+                    .into(binding.overlayBackgroundGuide)
+                binding.overlayBackgroundGuide.visibility = View.VISIBLE
+            }
+        } else {
+            binding.overlayBackgroundGuide.visibility = View.GONE
         }
     }
-
-    fun hideOverlayImage() {
-        binding.overlayImage.visibility = View.GONE
-    }
-
 
 
 
