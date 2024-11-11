@@ -26,3 +26,14 @@ springdoc:
 
 ai:
   host: ${HOST}
+
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    tags:
+      application: ${spring.application.name}
