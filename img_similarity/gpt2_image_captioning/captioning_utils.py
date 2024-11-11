@@ -40,9 +40,6 @@ def predict_caption(image_paths):
   return captions
 '''
 
-# 캡션 생성 함수
-# 하나의 이미지에 대해서만 처리
-# 하나의 이미지에 대해서만 캡션 생성 및 결과 단일 문자열 반환
 def predict_caption(image_path): 
     
     i_image = Image.open(image_path)
@@ -57,7 +54,7 @@ def predict_caption(image_path):
     return caption
 
 
-# 단어 리스트를 반환해 볼까??
+# input: img_path(string) -> output: word_lst[]
 def make_caption_list(image_path): 
     word_list = []
 
@@ -71,11 +68,12 @@ def make_caption_list(image_path):
     output_ids = model.generate(pixel_values, max_length=16, num_beams=4)
     caption = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-    word_list = [ word for word in caption.split() if len(word) > 2] # 풍경에서 2글자 이하인게 있나?
+    print('CAPTION: ', caption)
+    preposition_lst = ['above', 'below', 'over', 'under', 'down', 'into', 'accross', 'along',
+                       'through', 'around', 'behind', 'fornt', 'between', 'among', 'for', 'with', 'from', 'and']
 
-    # print('CAPTION: ', caption)
-    # print('word_list: ', word_list)
-    # print('typeOfCaption', type(caption))
+    word_list = [ word for word in caption.split() if len(word) > 2 and word not in preposition_lst ] # 풍경에서 2글자 이하인게 있나?
+    print(word_list)
     return word_list
 
 
@@ -95,5 +93,5 @@ def show_image_with_caption(image_path):
 
 
 # 테스트할 이미지 경로
-image_path = 'pics/bada3.jpg'  # 테스트 이미지 경로 입력
+# image_path = 'pics/bada3.jpg'
 # make_caption_list(image_path)

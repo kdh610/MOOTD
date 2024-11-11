@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from utils.image_captioning import generate_caption_keywords
 from utils.meta_clip import generate_metaclip_keywords
+from googletrans import Translator
 
 # 라우터 생성
 router = APIRouter()
@@ -27,5 +28,9 @@ async def upload_image(file: UploadFile = File(...)):
     # MetaCLIP 키워드 추출
     keywords_list = generate_metaclip_keywords(image_path, word_list)
 
-    # 결과 응답으로 반환
-    return JSONResponse(content={"keywords": keywords_list})
+    translator = Translator()
+    translated_keywords = [translator.translate(keyword, src='en', dest='ko').text for keyword in keywords_list]
+
+    return JSONResponse(content={"keywords": translated_keywords})
+
+    # return JSONResponse(content={"keywords": keywords_list})
