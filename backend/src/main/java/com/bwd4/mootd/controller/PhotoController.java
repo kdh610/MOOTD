@@ -88,8 +88,9 @@ public class PhotoController {
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
 
+    @Operation(summary = "사진을 단일로 조회하는 API", description = "photoId를 사용해서 이미지를 단일 조회하는 API")
     @GetMapping("/{photoId}")
-    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(@PathVariable("photoId") String photoId) {
+    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(@Parameter(description = "조회할 photoId") @PathVariable("photoId") String photoId) {
         return photoService.findPhotoDetail(photoId)
                 .map(photoDetail -> ResponseEntity.ok(ApiResponse.success("photo 단일 조회 성공", photoDetail)));
     }
