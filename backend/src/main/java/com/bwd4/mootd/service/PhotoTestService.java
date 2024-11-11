@@ -28,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,7 +50,7 @@ import java.util.*;
 public class PhotoTestService {
 
     private final PhotoTestRepository photoTestRepository;
-
+    private final ReactiveMongoTemplate reactiveMongoTemplate;
 
     /**
      * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
@@ -60,5 +63,19 @@ public class PhotoTestService {
         return photoTestRepository.findByTagContaining(tag)
                 .map(PhotoTest::toTagSearchTestDTO);
     }
+
+    public Flux<TagSearchTestDTO> findByTagContainingWithLimit(String tag, int limit) {
+        // Create a query to find PhotoTest with the given tag
+        Query query = new Query(Criteria.where("tag").regex(tag));
+
+        // Apply limit
+        query.limit(limit);
+
+        // Execute the query with ReactiveMongoTemplate
+        return reactiveMongoTemplate.find(query, PhotoTest.class)
+                .map(PhotoTest::toTagSearchTestDTO);
+    }
+
+
 
 }

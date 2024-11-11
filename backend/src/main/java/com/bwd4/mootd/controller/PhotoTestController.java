@@ -36,10 +36,10 @@ public class PhotoTestController {
      * @return
      */
     @GetMapping("/tag")
-    public Mono<ResponseEntity<ApiResponse<List<TagSearchTestDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchTestDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag, @RequestParam(value = "limit")int limit) {
         log.info("tag: {}", tag);
 
-        return photoService.searchTag(tag)
+        return photoService.findByTagContainingWithLimit(tag, limit)
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
