@@ -73,7 +73,11 @@
         android:id="@+id/guideListFragment"
         android:name="com.example.mootd.fragment.GuideListFragment"
         android:label="fragment_guide_list"
-        tools:layout="@layout/fragment_guide_list" />
+        tools:layout="@layout/fragment_guide_list" >
+        <action
+            android:id="@+id/action_guideListFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.example.mootd.fragment.SearchFragment"

@@ -26,6 +26,7 @@ import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.Toast
 import android.widget.ToggleButton
 import androidx.activity.addCallback
@@ -82,8 +83,8 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-    private var maskImageUrl: String? = null
-    private var guideImageUrl: String? = null
+    private var originalImageUrl: String? = null
+    private var personGuideImageUrl: String? = null
     private var backgroundGuideImageUrl: String? = null
 
 
@@ -120,11 +121,7 @@ class MainFragment : Fragment(), SensorEventListener {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
-        val imageId = arguments?.getString("imageId")
-        imageId?.let {
-            fetchGuideData(it)
-        }
-        val hasGuide = arguments?.getBoolean("hasGuide", false) ?: false
+        val hasGuide = arguments?.getBoolean("hasGuide") ?: false
         if (hasGuide) {
             binding.btnOriginalGuide.isSelected = true
             binding.btnOriginalGuide.visibility = View.VISIBLE
@@ -136,7 +133,20 @@ class MainFragment : Fragment(), SensorEventListener {
             binding.btnBackgroundGuide.visibility = View.GONE
         }
 
+        val isLocal = arguments?.getBoolean("isLocal") ?: false
+        if (isLocal) {
+            originalImageUrl = arguments?.getString("originalImagePath")
+            personGuideImageUrl = arguments?.getString("personGuideImagePath")
+            backgroundGuideImageUrl = arguments?.getString("backgroundGuideImagePath")
+        } else {
+            val photoId = arguments?.getString("photoId")
+            Log.d("Check argument okhttp", "main argument photoId: ${photoId}")
+            photoId?.let {
+                fetchGuideData(it)
+            }
+        }
         setupGuideButton()
+        updateOverlayImages()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -270,7 +280,9 @@ class MainFragment : Fragment(), SensorEventListener {
     }
 
     private fun setupHorizontalRecyclerView(imageList: List<String>) {
-        guideAdapter = GuideAdapter(imageList, R.layout.item_guide_image) { imageUri ->
+        val imagePairs = imageList.map { null to it }
+
+        guideAdapter = GuideAdapter(imagePairs, R.layout.item_guide_image) { imageUri ->
             Log.d("MainFragment", "Image clicked: $imageUri")
         }
 
@@ -398,16 +410,18 @@ class MainFragment : Fragment(), SensorEventListener {
 //        binding.overlayImage.visibility = View.GONE
 //    }
 
-    fun fetchGuideData(imageId: String) {
-        val call = RetrofitInstance.guideDetailService.getPhotoData(imageId)
+    fun fetchGuideData(photoId: String) {
+        val call = RetrofitInstance.guideDetailService.getPhotoData(photoId)
         call.enqueue(object : Callback<GuideDetailResponse> {
             override fun onResponse(call: Call<GuideDetailResponse>, response: Response<GuideDetailResponse>) {
                 if (response.isSuccessful) {
-//                    maskImageUrl = response.body()?.data?.maskImageUrl
-                    maskImageUrl = "https://mootdbucket.s3.ap-northeast-2.amazonaws.com/ORIGINAL/5c72bd20-0%ED%95%9C%EA%B0%95.jpg"
-                    guideImageUrl = response.body()?.data?.guideImageUrl
+//                    originalImageUrl = response.body()?.data?.maskImageUrl
+                    originalImageUrl = "https://mootdbucket.s3.ap-northeast-2.amazonaws.com/ORIGINAL/5c72bd20-0%ED%95%9C%EA%B0%95.jpg"
+                    personGuideImageUrl = response.body()?.data?.guideImageUrl
                     backgroundGuideImageUrl = ""
-                    updateOverlayImages() // 초기 오버레이 업데이트
+//                    updateOverlayImages() // 초기 오버레이 업데이트
+
+                    updateOverlayImages()
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}")
                 }
@@ -423,7 +437,7 @@ class MainFragment : Fragment(), SensorEventListener {
 
     fun updateOverlayImages() {
         if (binding.btnOriginalGuide.isSelected) {
-            maskImageUrl?.let { url ->
+            originalImageUrl?.let { url ->
                 Glide.with(this)
                     .load(url)
                     .into(binding.overlayOriginalGuide)
@@ -434,7 +448,7 @@ class MainFragment : Fragment(), SensorEventListener {
         }
 
         if (binding.btnPersonGuide.isSelected) {
-            guideImageUrl?.let { url ->
+            personGuideImageUrl?.let { url ->
                 Glide.with(this)
                     .load(url)
                     .into(binding.overlayPersonGuide)
@@ -455,7 +469,6 @@ class MainFragment : Fragment(), SensorEventListener {
             binding.overlayBackgroundGuide.visibility = View.GONE
         }
     }
-
 
 
 }
