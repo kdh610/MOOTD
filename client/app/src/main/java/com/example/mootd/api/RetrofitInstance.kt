@@ -67,4 +67,13 @@ object RetrofitInstance {
             .create(GuideDetailService::class.java)
     }
 
+    val guideUsageService: GuideUsageService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GuideUsageService::class.java)
+    }
+
 }
