@@ -249,6 +249,7 @@ public class PhotoService {
         return photoRepository.findById(photoId)
                 .map(photo -> new PhotoDetailDTO(photo.getId(),
                         photo.getMaskImageUrl(),
+                        null,
                         photo.getCoordinates().getY(),
                         photo.getCoordinates().getX())
                 );

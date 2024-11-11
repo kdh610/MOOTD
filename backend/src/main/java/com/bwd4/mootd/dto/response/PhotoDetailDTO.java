@@ -8,6 +8,8 @@ public record PhotoDetailDTO(
         String photoId,
         @Schema(description = "사람을 가린 이미지 url")
         String maskImageUrl,
+        @Schema(description = "가이드 Url")
+        String guideImageUrl,
         @Schema(description = "사진을 촬영한 위치, 위도")
         Double latitude,
         @Schema(description = "사진을 촬영한 위치, 경도")
