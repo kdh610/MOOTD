@@ -28,6 +28,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
 import android.widget.ToggleButton
+import androidx.activity.addCallback
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -97,6 +98,13 @@ class MainFragment : Fragment(), SensorEventListener {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Main에서는 무조건 뒤로가기 누르면 앱 꺼지게
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            requireActivity().finish() // 앱 종료
+        }
+
+
         // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
 //        findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
 //            Log.d("MainFragment", "Overlay Image Path?: $imagePath")
