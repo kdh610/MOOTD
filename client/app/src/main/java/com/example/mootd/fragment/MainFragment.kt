@@ -127,24 +127,24 @@ class MainFragment : Fragment(), SensorEventListener {
             binding.btnOriginalGuide.visibility = View.VISIBLE
             binding.btnPersonGuide.visibility = View.VISIBLE
             binding.btnBackgroundGuide.visibility = View.VISIBLE
+            val isLocal = arguments?.getBoolean("isLocal") ?: false
+            if (isLocal) {
+                originalImageUrl = arguments?.getString("originalImagePath")
+                personGuideImageUrl = arguments?.getString("personGuideImagePath")
+                backgroundGuideImageUrl = arguments?.getString("backgroundGuideImagePath")
+            } else {
+                val photoId = arguments?.getString("photoId")
+                photoId?.let {
+                    fetchGuideData(it)
+                }
+            }
         } else {
             binding.btnOriginalGuide.visibility = View.GONE
             binding.btnPersonGuide.visibility = View.GONE
             binding.btnBackgroundGuide.visibility = View.GONE
         }
 
-        val isLocal = arguments?.getBoolean("isLocal") ?: false
-        if (isLocal) {
-            originalImageUrl = arguments?.getString("originalImagePath")
-            personGuideImageUrl = arguments?.getString("personGuideImagePath")
-            backgroundGuideImageUrl = arguments?.getString("backgroundGuideImagePath")
-        } else {
-            val photoId = arguments?.getString("photoId")
-            Log.d("Check argument okhttp", "main argument photoId: ${photoId}")
-            photoId?.let {
-                fetchGuideData(it)
-            }
-        }
+
         setupGuideButton()
         updateOverlayImages()
 
