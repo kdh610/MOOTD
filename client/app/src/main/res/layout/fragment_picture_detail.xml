@@ -45,12 +45,13 @@
 
     <Button
         android:id="@+id/createGuideButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="137dp"
+        android:layout_height="44dp"
         android:layout_marginBottom="40dp"
         android:background="@drawable/rounded_button"
         android:text="생성하기"
-        android:textColor="#306B50"
+        android:textColor="#FFFFFF"
+        android:textSize="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

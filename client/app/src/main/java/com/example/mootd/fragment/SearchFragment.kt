@@ -91,13 +91,18 @@ class SearchFragment : Fragment() {
         RetrofitInstance.guideSearchService.searchPhotosByTag(query).enqueue(object : Callback<SearchResponse> {
             override fun onResponse(call: Call<SearchResponse>, response: Response<SearchResponse>) {
                 if (response.isSuccessful) {
-                    val photoList = response.body()?.data?.mapNotNull { it.originImageUrl } ?: emptyList()
+                    val photoList = response.body()?.data?.map {
+                        Pair(it.id, it.originImageUrl) // imageId와 originImageUrl을 Pair로 저장
+                    } ?: emptyList()
 
                     if (photoList.isNotEmpty()) {
                         // 검색 결과가 있을 때
-                        galleryAdapter = GalleryAdapter(photoList) { imageUrl ->
-                            // 클릭 이벤트 처리 (필요에 따라 수정)
-                            Toast.makeText(context, "이미지 클릭: $imageUrl", Toast.LENGTH_SHORT).show()
+                        galleryAdapter = GalleryAdapter(photoList) { imageId, imageUrl ->
+                            val bundle = Bundle().apply {
+                                putString("imageId", imageId)
+                                putString("imageUrl", imageUrl)
+                            }
+                            findNavController().navigate(R.id.action_searchFragment_to_guideDetailFragment, bundle)
                         }
                         binding.recyclerViewSearchResults.adapter = galleryAdapter
                         binding.recyclerViewSearchResults.visibility = View.VISIBLE
