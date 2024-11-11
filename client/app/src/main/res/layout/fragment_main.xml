@@ -60,14 +60,40 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
+    <!-- Original Guide 오버레이 이미지 -->
     <ImageView
-        android:id="@+id/overlayImage"
+        android:id="@+id/overlayOriginalGuide"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:alpha="0.6"
+        android:alpha="0.3"
         android:scaleType="centerCrop"
-        android:visibility="visible"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@id/viewFinder"
+        app:layout_constraintStart_toStartOf="@id/viewFinder"
+        app:layout_constraintTop_toTopOf="@id/viewFinder" />
+
+    <!-- Person Guide 오버레이 이미지 -->
+    <ImageView
+        android:id="@+id/overlayPersonGuide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0.3"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@id/viewFinder"
+        app:layout_constraintStart_toStartOf="@id/viewFinder"
+        app:layout_constraintTop_toTopOf="@id/viewFinder" />
+
+    <!-- Background Guide 오버레이 이미지 -->
+    <ImageView
+        android:id="@+id/overlayBackgroundGuide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0.3"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/viewFinder"
         app:layout_constraintEnd_toEndOf="@id/viewFinder"
         app:layout_constraintStart_toStartOf="@id/viewFinder"

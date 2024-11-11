@@ -87,5 +87,9 @@
         android:id="@+id/guideDetailFragment"
         android:name="com.example.mootd.fragment.GuideDetailFragment"
         android:label="fragment_guide_detail"
-        tools:layout="@layout/fragment_guide_detail" />
+        tools:layout="@layout/fragment_guide_detail" >
+        <action
+            android:id="@+id/action_guideDetailFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
 </navigation>

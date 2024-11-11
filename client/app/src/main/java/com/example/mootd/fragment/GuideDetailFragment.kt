@@ -37,6 +37,14 @@ class GuideDetailFragment : Fragment() {
         binding.backButton.setOnClickListener{
             findNavController().popBackStack()
         }
+
+        binding.cameraButton.setOnClickListener{
+            val bundle = Bundle().apply {
+                putString("imageId", imageId)
+                putBoolean("hasGuide", true)
+            }
+            findNavController().navigate(R.id.action_guideDetailFragment_to_mainFragment, bundle)
+        }
     }
 
     override fun onDestroyView() {
