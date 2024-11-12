@@ -1,5 +1,7 @@
 package com.bwd4.mootd.service;
 
+import com.bwd4.mootd.common.exception.BusinessException;
+import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.common.response.ApiResponse;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.domain.PhotoUsage;
@@ -190,7 +192,9 @@ public class PhotoService {
 
     public Mono<List<PhotoUsage>> getRecentUsageByDeviceId(String deviceId) {
         return photoUsageHistoryRepository.findById(deviceId)
-                .map(PhotoUsageHistory::getPhotoUsageList);
+                .map(PhotoUsageHistory::getPhotoUsageList)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.RECENT_USAGE_NOT_FOUND)));
+
     }
 
     public Mono<Void> recordPhotoUsage(PhotoUsageRequestDTO request) {

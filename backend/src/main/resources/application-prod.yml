@@ -10,8 +10,8 @@ spring:
 
 
 #카프카 설정 컨피그 파일로 대체
-#  kafka:
-#    bootstrap-servers: "localhost:9092"  # Kafka 서버 주소
+  kafka:
+    bootstrap-servers: "localhost:9092"  # Kafka 서버 주소
 #    consumer:
 #      auto-offset-reset: "earliest"       # 메시지를 처음부터 읽도록 설정
 #      key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
