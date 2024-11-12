@@ -1,66 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".fragment.SearchFragment">
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@drawable/rounded_search_bar"
-        android:padding="8dp"
-        android:gravity="center_vertical"
-        android:layout_margin="16dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/rounded_search_bar"
+            android:padding="8dp"
+            android:gravity="center_vertical"
+            android:layout_margin="16dp">
 
-        <ImageButton
-            android:id="@+id/btnBack"
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/icon_left_back_button"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="뒤로 가기" />
+
+            <EditText
+                android:id="@+id/etSearchQuery"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="검색"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:background="@android:color/transparent"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/icon_search_button"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="검색" />
+        </LinearLayout>
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewSearchResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false" />
+
+        <TextView
+            android:id="@+id/emptyTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/icon_left_back_button"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="뒤로 가기" />
+            android:layout_centerInParent="true"
+            android:layout_marginStart="16dp"
+            android:text="검색 결과가 없습니다"
+            android:visibility="gone"
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"/>
 
-        <EditText
-            android:id="@+id/etSearchQuery"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="검색"
-            android:inputType="text"
-            android:imeOptions="actionSearch"
-            android:background="@android:color/transparent"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp" />
 
-        <ImageButton
-            android:id="@+id/btnSearch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/icon_search_button"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="검색" />
     </LinearLayout>
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewSearchResults"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp"
-        android:clipToPadding="false" />
+    <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_gravity="center"
+    android:visibility="gone"
+    android:id="@+id/errorLayout">
 
     <TextView
-        android:id="@+id/emptyTextView"
+        android:id="@+id/tvErrorMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginStart="16dp"
-        android:text="검색 결과가 없습니다"
-        android:visibility="gone"
+        android:textColor="@android:color/black"
+        android:text="인터넷 연결이 불안정합니다"
+        android:gravity="center"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"/>
+        android:paddingBottom="8dp" />
 
-</LinearLayout>
+    <ImageButton
+        android:id="@+id/btnRetry"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:elevation="4dp"
+        android:padding="6dp"
+        android:src="@drawable/icon_retry_button"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="새로고침 버튼" />
+    </LinearLayout>
+</FrameLayout>
