@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsetsAnimation
 import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -52,7 +51,13 @@ class GuideImageListFragment : Fragment() {
             guideAdapter = GuideAdapter(imageList, R.layout.item_gallery_image) { imageUri ->
                 imageUri?.let { navigateToMainFragmentWithLocalImages(it) }
             }
-            binding.verticalRecyclerView.adapter = guideAdapter
+            if (imageList.isNotEmpty()) {
+                binding.tvErrorMessage.visibility = View.GONE
+
+            } else {
+                binding.tvErrorMessage.text = "생성한 가이드라인이 없습니다."
+                binding.tvErrorMessage.visibility = View.VISIBLE
+            }
         } else {
             // 'recent' 타입일 때 API에서 이미지를 가져옴
             guideAdapter = GuideAdapter(emptyList(), R.layout.item_gallery_image) { photoId  ->
@@ -61,15 +66,17 @@ class GuideImageListFragment : Fragment() {
                     postUsageData(it)
                 }
             }
-            binding.verticalRecyclerView.adapter = guideAdapter
             getRecentGuideList()  // API 호출
         }
 
+        binding.verticalRecyclerView.adapter = guideAdapter
         binding.verticalRecyclerView.apply {
             layoutManager = GridLayoutManager(context, 3)
             adapter = guideAdapter
             setHasFixedSize(true)
         }
+
+        binding.btnRetry.setOnClickListener{ getRecentGuideList() }
     }
     private fun navigateToMainFragmentWithLocalImages(imageUri: String) {
         val folderPath = File(imageUri).parentFile // 폴더 경로 가져오기
@@ -114,6 +121,8 @@ class GuideImageListFragment : Fragment() {
     }
 
     private fun getRecentGuideList() {
+        binding.tvErrorMessage.visibility = View.GONE
+        binding.btnRetry.visibility = View.GONE
         deviceId = getDeviceId(requireContext())
 
         val call = RetrofitInstance.guideRecentService.getRecentUsagePhotos(deviceId)
@@ -125,16 +134,27 @@ class GuideImageListFragment : Fragment() {
                     } ?: emptyList()
                     if (recentData != null) {
                         guideAdapter.updateData(recentData)
+                    } else {
+                        binding.tvErrorMessage.text = "최근 사용한 가이드라인이 없습니다."
+                        binding.tvErrorMessage.visibility = View.VISIBLE
                     }
                 } else {
                     Log.d("API ERROR", "ERROR: ${response.body()}")
+                    showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<RecentUsageResponse>, t: Throwable) {
                 // 네트워크 오류 시 처리할 코드
+                showNetworkErrorMessage()
             }
         })
+    }
+
+    private fun showNetworkErrorMessage() {
+        binding.tvErrorMessage.text = "인터넷 연결이 불안정합니다"
+        binding.tvErrorMessage.visibility = View.VISIBLE
+        binding.btnRetry.visibility = View.VISIBLE
     }
 
     fun getDeviceId(context: Context): String {

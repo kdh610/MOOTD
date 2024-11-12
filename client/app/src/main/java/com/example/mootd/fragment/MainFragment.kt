@@ -43,8 +43,10 @@ import com.bumptech.glide.Glide
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
 import com.example.mootd.api.GuideDetailResponse
+import com.example.mootd.api.PhotoData
 import com.example.mootd.api.RecentUsageResponse
 import com.example.mootd.api.RetrofitInstance
+import com.example.mootd.api.UsageRequest
 import com.example.mootd.databinding.FragmentMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -87,6 +89,8 @@ class MainFragment : Fragment(), SensorEventListener {
     private var personGuideImageUrl: String? = null
     private var backgroundGuideImageUrl: String? = null
 
+    private var currentSelectedPhotoId: String? = null
+
 
 
 
@@ -106,15 +110,6 @@ class MainFragment : Fragment(), SensorEventListener {
         }
 
 
-        // GuideFragment 또는 CreateGuideFragment에서 전달된 데이터 수신
-//        findNavController().previousBackStackEntry?.savedStateHandle?.getLiveData<String>("overlayImagePath")?.observe(viewLifecycleOwner) { imagePath ->
-//            Log.d("MainFragment", "Overlay Image Path?: $imagePath")
-//            // imagePath를 통해 오버레이 이미지 설정
-//            imagePath?.let {
-//                showOverlayImage(imagePath)
-//            }
-//        }
-
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -123,10 +118,7 @@ class MainFragment : Fragment(), SensorEventListener {
 
         val hasGuide = arguments?.getBoolean("hasGuide") ?: false
         if (hasGuide) {
-            binding.btnOriginalGuide.isSelected = true
-            binding.btnOriginalGuide.visibility = View.VISIBLE
-            binding.btnPersonGuide.visibility = View.VISIBLE
-            binding.btnBackgroundGuide.visibility = View.VISIBLE
+            setOverlay()
             val isLocal = arguments?.getBoolean("isLocal") ?: false
             if (isLocal) {
                 originalImageUrl = arguments?.getString("originalImagePath")
@@ -152,43 +144,24 @@ class MainFragment : Fragment(), SensorEventListener {
 
         binding.btnCapture.setOnClickListener{takePhoto()}
         binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
-        binding.btnMap.setOnClickListener { navigateToMapFragment() }
-        binding.btnGallery.setOnClickListener{
-            findNavController().navigate(R.id.action_mainFragment_to_galleryFragment)
-        }
+        binding.btnMap.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_mapFragment) }
+        binding.btnGallery.setOnClickListener{ findNavController().navigate(R.id.action_mainFragment_to_galleryFragment) }
+        binding.btnSearch.setOnClickListener{ findNavController().navigate(R.id.action_mainFragment_to_searchFragment) }
 
+        binding.btnMore.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_guideListFragment) }
+        binding.btnCloseHorizontalLayout.setOnClickListener { binding.horizontalLayout.visibility = View.GONE }
         binding.btnGuide.setOnClickListener {
             // 가로 스크롤 사진 목록 보이기
             binding.horizontalLayout.visibility = View.VISIBLE
             fetchAndDisplayGuideImages() // 가로 스크롤 RecyclerView 설정
         }
-
-
-        binding.btnMore.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_guideListFragment)
+        binding.btnRetry.setOnClickListener {
+            fetchAndDisplayGuideImages()
         }
 
-        binding.btnCloseHorizontalLayout.setOnClickListener {
-            binding.horizontalLayout.visibility = View.GONE
-        }
 
-        binding.btnCloseHorizontalLayout.post {
-            val parentView = binding.horizontalLayout
-            val delegateArea = Rect()
-            binding.btnCloseHorizontalLayout.getHitRect(delegateArea)
-            val extraPadding = 50 // 원하는 크기만큼 클릭 영역을 확장 (px 단위)
-            delegateArea.inset(-extraPadding, -extraPadding)
-            parentView.touchDelegate = TouchDelegate(delegateArea, binding.btnCloseHorizontalLayout)
-        }
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-
-
-
-        binding.btnSearch.setOnClickListener{
-         findNavController().navigate(R.id.action_mainFragment_to_searchFragment)
-        }
-
 
     }
 
@@ -236,54 +209,72 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
-    private fun setupGuideButton() {
-        binding.btnOriginalGuide.setOnClickListener {
-            binding.btnOriginalGuide.isSelected = !binding.btnOriginalGuide.isSelected
-            updateOverlayImages()
-        }
 
-        binding.btnPersonGuide.setOnClickListener {
-            binding.btnPersonGuide.isSelected = !binding.btnPersonGuide.isSelected
-            updateOverlayImages()
-        }
 
-        binding.btnBackgroundGuide.setOnClickListener {
-            binding.btnBackgroundGuide.isSelected = !binding.btnBackgroundGuide.isSelected
-            updateOverlayImages()
-        }
-    }
 
-    fun getDeviceId(context: Context): String {
-        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+    private fun getDeviceId(): String {
+        return Settings.Secure.getString(requireContext().contentResolver, Settings.Secure.ANDROID_ID)
     }
 
     private fun fetchAndDisplayGuideImages() {
-        val deviceId = getDeviceId(requireContext())
-
+        binding.tvErrorMessage.visibility = View.GONE
+        binding.btnRetry.visibility = View.GONE
+        val deviceId = getDeviceId()
         val call = RetrofitInstance.guideRecentService.getRecentUsagePhotos(deviceId)
         call.enqueue(object : Callback<RecentUsageResponse> {
             override fun onResponse(call: Call<RecentUsageResponse>, response: Response<RecentUsageResponse>) {
                 if (response.isSuccessful) {
-                    val maskImageUrls = response.body()?.data?.mapNotNull { it.originImageUrl } ?: emptyList()
-//                    val maskImageUrls = response.body()?.data?.mapNotNull { it.maskImageUrl } ?: emptyList()
-                    setupHorizontalRecyclerView(maskImageUrls) // RecyclerView 설정
+                    val photoList = response.body()?.data ?: emptyList()
+                    if (photoList.isEmpty()) {
+                        binding.tvErrorMessage.text = "사용한 가이드라인이 없습니다"
+                        binding.tvErrorMessage.visibility = View.VISIBLE
+                    } else {
+                        binding.tvErrorMessage.visibility = View.GONE
+                        setupHorizontalRecyclerView(deviceId, photoList) // RecyclerView 설정
+                    }
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
+                    showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<RecentUsageResponse>, t: Throwable) {
                 Log.e("API ERROR", "Network error: ${t.message}")
-                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+                showNetworkErrorMessage()
             }
         })
     }
 
-    private fun setupHorizontalRecyclerView(imageList: List<String>) {
-        val imagePairs = imageList.map { null to it }
+    private fun showNetworkErrorMessage() {
+        binding.tvErrorMessage.text = "인터넷 연결이 불안정합니다"
+        binding.tvErrorMessage.visibility = View.VISIBLE
+        binding.btnRetry.visibility = View.VISIBLE
+    }
 
-        guideAdapter = GuideAdapter(imagePairs, R.layout.item_guide_image) { imageUri ->
-            Log.d("MainFragment", "Image clicked: $imageUri")
+    private fun setupHorizontalRecyclerView(deviceId: String, photoList: List<PhotoData>) {
+        val imagePairs = photoList.map { it.photoId to it.originImageUrl }
+
+        guideAdapter = GuideAdapter(imagePairs, R.layout.item_guide_image) { photoId ->
+
+            if (currentSelectedPhotoId == photoId) {
+                clearOverlayImages()
+                currentSelectedPhotoId = null
+            } else {
+                currentSelectedPhotoId = photoId
+                val selectedPhoto = photoList.find { it.photoId == photoId }
+                setOverlay()
+                // 선택한 사진 데이터를 오버레이에 설정
+                selectedPhoto?.let {
+                    originalImageUrl = it.originImageUrl
+                    personGuideImageUrl = it.guideImageUrl
+                    backgroundGuideImageUrl = it.maskImageUrl
+                    updateOverlayImages() // 오버레이 이미지 업데이트
+                }
+                postUsageData(deviceId, photoId!!)
+
+            }
+
         }
 
         binding.horizontalRecyclerView.apply {
@@ -293,9 +284,46 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
-    private fun navigateToMapFragment() {
-        findNavController().navigate(R.id.action_mainFragment_to_mapFragment)
+    private fun postUsageData(deviceId: String, photoId: String) {
+        val usageRequest = UsageRequest(deviceId, photoId)
+        RetrofitInstance.guideUsageService.postUsageData(usageRequest).enqueue(object : Callback<Unit> {
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                if (response.isSuccessful) {
+                    Log.d("GuideDetailFragment", "Usage data posted successfully")
+                } else {
+                    Log.e("GuideDetailFragment", "Failed to post usage data: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                Log.e("GuideDetailFragment", "Error posting usage data", t)
+                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
+
+
+    private fun clearOverlayImages() {
+        originalImageUrl = null
+        personGuideImageUrl = null
+        backgroundGuideImageUrl = null
+        binding.btnOriginalGuide.isSelected = false
+        updateOverlayImages() // 오버레이 이미지 업데이트
+
+
+        binding.btnOriginalGuide.visibility = View.GONE
+        binding.btnPersonGuide.visibility = View.GONE
+        binding.btnBackgroundGuide.visibility = View.GONE
+    }
+
+    private fun setOverlay() {
+        // 가이드 버튼들 표시
+        binding.btnOriginalGuide.isSelected = true
+        binding.btnOriginalGuide.visibility = View.VISIBLE
+        binding.btnPersonGuide.visibility = View.VISIBLE
+        binding.btnBackgroundGuide.visibility = View.VISIBLE
+    }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults: IntArray
@@ -321,7 +349,6 @@ class MainFragment : Fragment(), SensorEventListener {
             }
 
             imageCapture = ImageCapture.Builder().build()
-//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
@@ -367,56 +394,20 @@ class MainFragment : Fragment(), SensorEventListener {
         )
     }
 
-
-
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null // 메모리 누수를 방지하기 위해 binding 해제
-        cameraExecutor.shutdown()
-    }
 
-    companion object {
-        private const val TAG = "CameraXApp"
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-        private val REQUIRED_PERMISSIONS = mutableListOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-        ).apply {
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
-        }.toTypedArray()
-    }
-//
-//    fun showOverlayImage(imagePath: String) {
-//        Log.d("MainFragment", "showOverlayImage called with path: $imagePath")
-//        val bitmap = BitmapFactory.decodeFile(imagePath)
-//
-//        if (bitmap != null) {
-//            Log.d("MainFragment", "Loading image from path: $imagePath")
-//            binding.overlayImage.setImageBitmap(bitmap)
-//            binding.overlayImage.visibility = View.VISIBLE
-//        } else {
-//            Log.e("MainFragment", "Failed to load image: Bitmap is null for path $imagePath")
-//        }
-//    }
-//
-//    fun hideOverlayImage() {
-//        binding.overlayImage.visibility = View.GONE
-//    }
+
 
     fun fetchGuideData(photoId: String) {
         val call = RetrofitInstance.guideDetailService.getPhotoData(photoId)
         call.enqueue(object : Callback<GuideDetailResponse> {
             override fun onResponse(call: Call<GuideDetailResponse>, response: Response<GuideDetailResponse>) {
                 if (response.isSuccessful) {
-//                    originalImageUrl = response.body()?.data?.maskImageUrl
-                    originalImageUrl = "https://mootdbucket.s3.ap-northeast-2.amazonaws.com/ORIGINAL/5c72bd20-0%ED%95%9C%EA%B0%95.jpg"
+                    originalImageUrl = response.body()?.data?.maskImageUrl
+//                    originalImageUrl = "https://mootdbucket.s3.ap-northeast-2.amazonaws.com/ORIGINAL/5c72bd20-0%ED%95%9C%EA%B0%95.jpg"
                     personGuideImageUrl = response.body()?.data?.guideImageUrl
                     backgroundGuideImageUrl = ""
 //                    updateOverlayImages() // 초기 오버레이 업데이트
@@ -436,6 +427,7 @@ class MainFragment : Fragment(), SensorEventListener {
     }
 
     fun updateOverlayImages() {
+        Log.d("check console", "okhttp update overlay function $originalImageUrl")
         if (binding.btnOriginalGuide.isSelected) {
             originalImageUrl?.let { url ->
                 Glide.with(this)
@@ -470,5 +462,40 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
+    private fun setupGuideButton() {
+        binding.btnOriginalGuide.setOnClickListener {
+            binding.btnOriginalGuide.isSelected = !binding.btnOriginalGuide.isSelected
+            updateOverlayImages()
+        }
 
+        binding.btnPersonGuide.setOnClickListener {
+            binding.btnPersonGuide.isSelected = !binding.btnPersonGuide.isSelected
+            updateOverlayImages()
+        }
+
+        binding.btnBackgroundGuide.setOnClickListener {
+            binding.btnBackgroundGuide.isSelected = !binding.btnBackgroundGuide.isSelected
+            updateOverlayImages()
+        }
+    }
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // 메모리 누수를 방지하기 위해 binding 해제
+        cameraExecutor.shutdown()
+    }
+
+    companion object {
+        private const val TAG = "CameraXApp"
+        private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        ).apply {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }.toTypedArray()
+    }
 }
