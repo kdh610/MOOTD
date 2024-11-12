@@ -1,5 +1,10 @@
 from meta_clip.metaclip_utils import metaclip_res
-from gpt2_image_captioning.captioning_utils import make_caption_list
+from gpt2_image_captioning.cap_pipline import make_caption_list
+from transformers import pipeline
+from PIL import Image
+
+# 이미지 캡셔닝을 위한 pipeline 생성
+captioning_pipeline = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
 
 def pic_upload(image_path):
     
@@ -20,7 +25,7 @@ def pic_upload(image_path):
 
 if __name__ == '__main__':
 
-    image_path = "meta_clip/docs/tg.jpg" # 이미지 경로 어케 설정?
+    image_path = "meta_clip/docs/bada1.jpg"
     # image_path = "meta_clip/docs/bada3.jpg" # 이미지 경로 어케 설정?
 
     keywords = []
