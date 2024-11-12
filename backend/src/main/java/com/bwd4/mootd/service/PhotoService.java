@@ -4,6 +4,7 @@ import com.bwd4.mootd.common.response.ApiResponse;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.domain.PhotoUsageHistory;
+import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
@@ -63,7 +65,8 @@ public class PhotoService {
      * @param request
      * @return
      */
-    public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
+    @KafkaListener(topics = "photo-upload-topic", groupId = "photo-consumer-group")
+    public Mono<Void> uploadPhotoLogics(KafkaPhotoUploadRequestDTO request) {
         return Mono.fromCallable(() -> copyFileAndExtractMetaData(request))
                 .flatMap(result -> saveInitialPhotoMetadata(result, request))
                 .flatMap(this::processMaskAndUpdatePhoto)
@@ -92,7 +95,7 @@ public class PhotoService {
      * @param request
      * @return
      */
-    private Mono<Photo> saveInitialPhotoMetadata(UploadResult result, PhotoUploadRequestDTO request) {
+    private Mono<Photo> saveInitialPhotoMetadata(UploadResult result, KafkaPhotoUploadRequestDTO request) {
         Photo photo = new Photo();
         photo.setDeviceId(request.deviceId());
         photo.setCreatedAt(result.createdAt());
@@ -111,12 +114,12 @@ public class PhotoService {
      * @return
      * @throws IOException
      */
-    private UploadResult copyFileAndExtractMetaData(PhotoUploadRequestDTO request) throws IOException {
-        byte[] fileBytes = request.originImageFile().getBytes();
+    private UploadResult copyFileAndExtractMetaData(KafkaPhotoUploadRequestDTO request) throws IOException {
+        byte[] fileBytes = request.originImageData();
         MultipartFile copiedFile = new MockMultipartFile(
-                request.originImageFile().getName(),
-                request.originImageFile().getOriginalFilename(),
-                request.originImageFile().getContentType(),
+                request.name(),
+                request.originImageFilename(),
+                request.contentType(),
                 fileBytes
         );
         // 메타정보 추출
