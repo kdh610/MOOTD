@@ -23,7 +23,7 @@ public class KafkaConsumerConfig {
         Map<String, Object> configProps = new HashMap<>();
 
         // Kafka 브로커 서버 주소 설정
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
 
         // 컨슈머 그룹 ID 설정
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "webflux-consumer-group");
