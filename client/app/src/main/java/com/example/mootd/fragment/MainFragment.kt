@@ -46,6 +46,7 @@ import com.example.mootd.api.GuideDetailResponse
 import com.example.mootd.api.PhotoData
 import com.example.mootd.api.RecentUsageResponse
 import com.example.mootd.api.RetrofitInstance
+import com.example.mootd.api.UsageRequest
 import com.example.mootd.databinding.FragmentMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -207,19 +208,20 @@ class MainFragment : Fragment(), SensorEventListener {
 
 
 
-    fun getDeviceId(context: Context): String {
-        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+
+    private fun getDeviceId(): String {
+        return Settings.Secure.getString(requireContext().contentResolver, Settings.Secure.ANDROID_ID)
     }
 
     private fun fetchAndDisplayGuideImages() {
-        val deviceId = getDeviceId(requireContext())
-
+        val deviceId = getDeviceId()
         val call = RetrofitInstance.guideRecentService.getRecentUsagePhotos(deviceId)
         call.enqueue(object : Callback<RecentUsageResponse> {
             override fun onResponse(call: Call<RecentUsageResponse>, response: Response<RecentUsageResponse>) {
                 if (response.isSuccessful) {
                     val photoList = response.body()?.data ?: emptyList()
-                    setupHorizontalRecyclerView(photoList) // RecyclerView 설정
+                    setupHorizontalRecyclerView(deviceId, photoList) // RecyclerView 설정
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
                 }
@@ -232,7 +234,7 @@ class MainFragment : Fragment(), SensorEventListener {
         })
     }
 
-    private fun setupHorizontalRecyclerView(photoList: List<PhotoData>) {
+    private fun setupHorizontalRecyclerView(deviceId: String, photoList: List<PhotoData>) {
         val imagePairs = photoList.map { it.photoId to it.originImageUrl }
 
         guideAdapter = GuideAdapter(imagePairs, R.layout.item_guide_image) { photoId ->
@@ -251,6 +253,8 @@ class MainFragment : Fragment(), SensorEventListener {
                     backgroundGuideImageUrl = it.maskImageUrl
                     updateOverlayImages() // 오버레이 이미지 업데이트
                 }
+                postUsageData(deviceId, photoId!!)
+
             }
 
         }
@@ -261,6 +265,25 @@ class MainFragment : Fragment(), SensorEventListener {
             setHasFixedSize(true)
         }
     }
+
+    private fun postUsageData(deviceId: String, photoId: String) {
+        val usageRequest = UsageRequest(deviceId, photoId)
+        RetrofitInstance.guideUsageService.postUsageData(usageRequest).enqueue(object : Callback<Unit> {
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                if (response.isSuccessful) {
+                    Log.d("GuideDetailFragment", "Usage data posted successfully")
+                } else {
+                    Log.e("GuideDetailFragment", "Failed to post usage data: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                Log.e("GuideDetailFragment", "Error posting usage data", t)
+                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 
     private fun clearOverlayImages() {
         originalImageUrl = null
