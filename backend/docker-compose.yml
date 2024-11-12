@@ -1,4 +1,4 @@
-version: '3.8'  # Docker Compose 버전
+version: '3'  # Docker Compose 버전
 
 services:
   zookeeper:
@@ -15,7 +15,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092  # localhost 대신 kafka로 변경
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       ALLOW_PLAINTEXT_LISTENER: "yes"
     depends_on:
@@ -36,7 +36,6 @@ services:
       S3_BUCKET : ${S3_BUCKET}
       S3_ACCESSKEY : ${S3_ACCESSKEY}
       S3_SECRETKEY : ${S3_SECRETKEY}
-      KAFKA_BROKER: kafka:9092  # Spring 애플리케이션에서 Kafka 브로커 연결
     depends_on:
       - kafka  # Kafka가 먼저 시작된 후 Spring 앱 시작
     networks:
