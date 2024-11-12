@@ -22,7 +22,7 @@ public class KafkaProducerConfig {
         Map<String, Object> configProps = new HashMap<>();
 
         // Kafka 브로커 서버 주소 설정
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
 
         // 메시지 키와 값을 직렬화하는 클래스 지정
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
