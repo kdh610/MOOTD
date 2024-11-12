@@ -35,12 +35,10 @@ public class PhotoController {
         this.producerService = producerService;
     }
 
-    //TODO 촬영 기기의 고유정보를 입력받아야함.
     @Operation(summary = "촬영 후 사진을 서버에 업로드하는 api", description = "촬영 사진을 서버로 업로드 합니다. !! 향후에 안드로이드 기기에서 가이드라인까지 생성한다면 가이드라인도 서버로 전송해야합니다.!!")
     @PostMapping(consumes = "multipart/form-data")
     public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@ModelAttribute PhotoUploadRequestDTO request) {
         log.info("file is null = {}", request.originImageFile().isEmpty());
-//        photoService.uploadPhotoLogics(request).subscribe();
         // Kafka로 메시지를 전송
         producerService.sendPhotoUploadRequest(request).subscribe();
         return Mono.just(new ResponseEntity<>(ApiResponse.success("서버 전송이 완료되었습니다.", null), HttpStatus.OK));
