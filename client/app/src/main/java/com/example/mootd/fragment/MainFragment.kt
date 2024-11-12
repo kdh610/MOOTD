@@ -233,6 +233,10 @@ class MainFragment : Fragment(), SensorEventListener {
                         binding.tvErrorMessage.visibility = View.GONE
                         setupHorizontalRecyclerView(deviceId, photoList) // RecyclerView 설정
                     }
+                } else if (response.code() == 404) {
+                    // 404 에러일 때 처리
+                    binding.tvErrorMessage.text = "최근 사용한 가이드라인이 없습니다."
+                    binding.tvErrorMessage.visibility = View.VISIBLE
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
                     showNetworkErrorMessage()
@@ -427,7 +431,6 @@ class MainFragment : Fragment(), SensorEventListener {
     }
 
     fun updateOverlayImages() {
-        Log.d("check console", "okhttp update overlay function $originalImageUrl")
         if (binding.btnOriginalGuide.isSelected) {
             originalImageUrl?.let { url ->
                 Glide.with(this)
