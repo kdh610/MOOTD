@@ -73,10 +73,27 @@
         android:id="@+id/guideListFragment"
         android:name="com.example.mootd.fragment.GuideListFragment"
         android:label="fragment_guide_list"
-        tools:layout="@layout/fragment_guide_list" />
+        tools:layout="@layout/fragment_guide_list" >
+        <action
+            android:id="@+id/action_guideListFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.example.mootd.fragment.SearchFragment"
         android:label="fragment_search"
-        tools:layout="@layout/fragment_search" />
+        tools:layout="@layout/fragment_search" >
+        <action
+            android:id="@+id/action_searchFragment_to_guideDetailFragment"
+            app:destination="@id/guideDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/guideDetailFragment"
+        android:name="com.example.mootd.fragment.GuideDetailFragment"
+        android:label="fragment_guide_detail"
+        tools:layout="@layout/fragment_guide_detail" >
+        <action
+            android:id="@+id/action_guideDetailFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
 </navigation>
