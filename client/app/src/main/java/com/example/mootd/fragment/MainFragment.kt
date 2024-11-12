@@ -155,6 +155,9 @@ class MainFragment : Fragment(), SensorEventListener {
             binding.horizontalLayout.visibility = View.VISIBLE
             fetchAndDisplayGuideImages() // 가로 스크롤 RecyclerView 설정
         }
+        binding.btnRetry.setOnClickListener {
+            fetchAndDisplayGuideImages()
+        }
 
 
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -215,23 +218,38 @@ class MainFragment : Fragment(), SensorEventListener {
     }
 
     private fun fetchAndDisplayGuideImages() {
+        binding.tvErrorMessage.visibility = View.GONE
+        binding.btnRetry.visibility = View.GONE
         val deviceId = getDeviceId()
         val call = RetrofitInstance.guideRecentService.getRecentUsagePhotos(deviceId)
         call.enqueue(object : Callback<RecentUsageResponse> {
             override fun onResponse(call: Call<RecentUsageResponse>, response: Response<RecentUsageResponse>) {
                 if (response.isSuccessful) {
                     val photoList = response.body()?.data ?: emptyList()
-                    setupHorizontalRecyclerView(deviceId, photoList) // RecyclerView 설정
+                    if (photoList.isEmpty()) {
+                        binding.tvErrorMessage.text = "사용한 가이드라인이 없습니다"
+                        binding.tvErrorMessage.visibility = View.VISIBLE
+                    } else {
+                        binding.tvErrorMessage.visibility = View.GONE
+                        setupHorizontalRecyclerView(deviceId, photoList) // RecyclerView 설정
+                    }
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
+                    showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<RecentUsageResponse>, t: Throwable) {
                 Log.e("API ERROR", "Network error: ${t.message}")
-                Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
+                showNetworkErrorMessage()
             }
         })
+    }
+
+    private fun showNetworkErrorMessage() {
+        binding.tvErrorMessage.text = "인터넷 연결이 불안정합니다"
+        binding.tvErrorMessage.visibility = View.VISIBLE
+        binding.btnRetry.visibility = View.VISIBLE
     }
 
     private fun setupHorizontalRecyclerView(deviceId: String, photoList: List<PhotoData>) {
