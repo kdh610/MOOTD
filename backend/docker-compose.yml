@@ -15,11 +15,13 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092  # localhost 대신 kafka로 변경
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       ALLOW_PLAINTEXT_LISTENER: "yes"
     depends_on:
       - zookeeper  # Zookeeper가 먼저 시작되어야 Kafka가 실행됨
+    networks:
+      - app-network
 
   spring-app:
     build:
