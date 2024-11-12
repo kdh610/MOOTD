@@ -2,6 +2,7 @@ package com.bwd4.mootd.infra.kafka;
 
 import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;

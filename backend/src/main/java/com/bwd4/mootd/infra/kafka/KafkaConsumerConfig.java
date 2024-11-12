@@ -2,6 +2,7 @@ package com.bwd4.mootd.infra.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -17,13 +18,16 @@ import java.util.Map;
 @Configuration  // Spring Boot 설정 클래스임을 나타냄
 public class KafkaConsumerConfig {
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
     // Kafka 컨슈머 팩토리를 설정하는 메서드
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
 
         // Kafka 브로커 서버 주소 설정
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
         // 컨슈머 그룹 ID 설정
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "webflux-consumer-group");
