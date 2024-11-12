@@ -11,7 +11,10 @@ def make_caption_list(image_path):
                     'through', 'around', 'behind', 'fornt', 'between', 'among', 'for', 'with', 'from', 'and']
 
     # 이미지 캡셔닝을 위한 pipeline 생성
-    captioning_pipeline = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
+    # captioning_pipeline = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
+    # Use a pipeline as a high-level helper
+    # blip-image-captioning-large
+    captioning_pipeline = pipeline("image-to-text", model="Salesforce/blip-image-captioning-large")
 
     # 이미지 로드
     image = Image.open(image_path)
@@ -19,7 +22,7 @@ def make_caption_list(image_path):
         image = image.convert(mode="RGB")
 
 
-    caption = captioning_pipeline(image)[0]['generated_text']
+    caption = captioning_pipeline(image, max_new_tokens=50)[0]['generated_text']
     print("Caption:", caption)
     # print(type(caption))
 
