@@ -129,6 +129,7 @@ class GuideImageListFragment : Fragment() {
         call.enqueue(object : Callback<RecentUsageResponse> {
             override fun onResponse(call: Call<RecentUsageResponse>, response: Response<RecentUsageResponse>) {
                 if (response.isSuccessful) {
+                    Log.d("API RESPONSE okhttp", "response: ${response.headers()}")
                     val recentData = response.body()?.data?.mapNotNull { data ->
                         data.photoId to (data.originImageUrl ?: "")
                     } ?: emptyList()
@@ -138,13 +139,18 @@ class GuideImageListFragment : Fragment() {
                         binding.tvErrorMessage.text = "최근 사용한 가이드라인이 없습니다."
                         binding.tvErrorMessage.visibility = View.VISIBLE
                     }
-                } else {
+                } else if (response.code() == 404) {
+                    // 404 에러일 때 처리
+                    binding.tvErrorMessage.text = "최근 사용한 가이드라인이 없습니다."
+                    binding.tvErrorMessage.visibility = View.VISIBLE
+                }  else {
                     Log.d("API ERROR", "ERROR: ${response.body()}")
                     showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<RecentUsageResponse>, t: Throwable) {
+                Log.d("API RESPONSE okhttp", "why here? ${t.message}")
                 // 네트워크 오류 시 처리할 코드
                 showNetworkErrorMessage()
             }

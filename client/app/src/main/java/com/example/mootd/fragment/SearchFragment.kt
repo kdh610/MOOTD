@@ -70,6 +70,8 @@ class SearchFragment : Fragment() {
 
         // RecyclerView 설정
         binding.recyclerViewSearchResults.layoutManager = GridLayoutManager(context, 3)
+
+        binding.btnRetry.setOnClickListener { performSearch() }
     }
 
     private fun performSearch() {
@@ -88,6 +90,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun searchPhotos(query: String) {
+        binding.errorLayout.visibility = View.GONE
         RetrofitInstance.guideSearchService.searchPhotosByTag(query).enqueue(object : Callback<SearchResponse> {
             override fun onResponse(call: Call<SearchResponse>, response: Response<SearchResponse>) {
                 if (response.isSuccessful) {
@@ -113,14 +116,18 @@ class SearchFragment : Fragment() {
                         binding.emptyTextView.visibility = View.VISIBLE
                     }
                 } else {
-                    Toast.makeText(context, "서버 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                    showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<SearchResponse>, t: Throwable) {
-                Toast.makeText(context, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                showNetworkErrorMessage()
             }
         })
+    }
+
+    private fun showNetworkErrorMessage() {
+        binding.errorLayout.visibility = View.VISIBLE
     }
 
     override fun onDestroyView() {

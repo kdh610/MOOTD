@@ -43,7 +43,7 @@
         android:layout_margin="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Switch Camera"
-        android:src="@drawable/icon_switch_camera_button"
+        android:src="@drawable/icon_camera_switch_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/viewFinder" />
@@ -245,17 +245,20 @@
             android:textColor="@color/black"
             android:gravity="center"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/btnCloseHorizontalLayout"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btnRetry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="새로고침"
             android:visibility="gone"
+            android:elevation="4dp"
+            android:padding="6dp"
+            android:src="@drawable/icon_retry_button"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
             app:layout_constraintTop_toBottomOf="@id/tvErrorMessage"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"

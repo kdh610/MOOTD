@@ -2,7 +2,8 @@
 <resources>
 
     <style name="Theme.Mootd" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <!-- Customize your theme here -->
         <item name="colorPrimary">@color/main_color</item>
         <item name="colorPrimaryDark">@color/main_color</item>
