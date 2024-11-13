@@ -80,8 +80,6 @@ class MainFragment : Fragment(), SensorEventListener {
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
 
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -155,14 +153,23 @@ class MainFragment : Fragment(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        rotationSensor?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        Log.d("MainFragment", "onResume called")
+        // rotationSensor가 null인지 확인
+        if (rotationSensor == null) {
+            Log.e("MainFragment", "Rotation Sensor not available on this device!")
+        } else {
+            Log.d("MainFragment", "Rotation Sensor is available, registering listener.")
+            sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_NORMAL)
         }
+//        rotationSensor?.also {
+//            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+//        }
     }
 
     override fun onPause() {
         super.onPause()
         sensorManager.unregisterListener(this)
+        Log.d("MainFragment", "Listener unregistered.")
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -171,9 +178,6 @@ class MainFragment : Fragment(), SensorEventListener {
             val rotationMatrix = FloatArray(9)
             val orientation = FloatArray(3)
 
-//            // 회전 행렬 계산
-//            SensorManager.getRotationMatrixFromOrientation(event.values, rotationMatrix)
-
             // 방향 정보 가져오기
             SensorManager.getOrientation(rotationMatrix, orientation)
 
@@ -181,8 +185,12 @@ class MainFragment : Fragment(), SensorEventListener {
             val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat() // Pitch (x-axis)
             val roll = Math.toDegrees(orientation[2].toDouble()).toFloat() // Roll (y-axis)
 
+            Log.d("SensorData", "Pitch: $pitch, Roll: $roll")
+
             // 카메라 위치 조정
             adjustCameraPosition(pitch, roll)
+
+
         }
     }
 
