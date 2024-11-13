@@ -48,6 +48,7 @@ import com.example.mootd.api.RecentUsageResponse
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.api.UsageRequest
 import com.example.mootd.databinding.FragmentMainBinding
+import com.example.mootd.manager.CameraManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,6 +92,8 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private var currentSelectedPhotoId: String? = null
 
+    private lateinit var cameraManager: CameraManager
+
 
 
 
@@ -109,12 +112,16 @@ class MainFragment : Fragment(), SensorEventListener {
             requireActivity().finish() // 앱 종료
         }
 
+        cameraManager = CameraManager(this, binding)
+
 
         if (allPermissionsGranted()) {
-            startCamera()
+            cameraManager.startCamera()
         } else {
             requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
+
+        setupUI()
 
         val hasGuide = arguments?.getBoolean("hasGuide") ?: false
         if (hasGuide) {
@@ -142,8 +149,9 @@ class MainFragment : Fragment(), SensorEventListener {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        binding.btnCapture.setOnClickListener{takePhoto()}
-        binding.btnSwitchCamera.setOnClickListener{toggleCamera()}
+
+
+
         binding.btnMap.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_mapFragment) }
         binding.btnGallery.setOnClickListener{ findNavController().navigate(R.id.action_mainFragment_to_galleryFragment) }
         binding.btnSearch.setOnClickListener{ findNavController().navigate(R.id.action_mainFragment_to_searchFragment) }
@@ -164,6 +172,27 @@ class MainFragment : Fragment(), SensorEventListener {
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
     }
+
+    private fun setupUI() {
+        binding.btnCapture.setOnClickListener {
+            cameraManager.takePhoto { photoPath ->
+                val bundle = Bundle().apply { putString("photoFilePath", photoPath) }
+                findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
+            }
+        }
+
+        binding.btnSwitchCamera.setOnClickListener {
+            cameraManager.toggleCamera()
+        }
+
+//        binding.btnGuide.setOnClickListener {
+//            guideOverlayManager.setOverlay("originalUrl", "personUrl", "backgroundUrl")
+//        }
+    }
+
+
+
+
 
     override fun onResume() {
         super.onResume()
@@ -335,7 +364,7 @@ class MainFragment : Fragment(), SensorEventListener {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                startCamera()
+                cameraManager.startCamera()
             } else {
                 Toast.makeText(context, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
                 activity?.finish()
@@ -343,60 +372,6 @@ class MainFragment : Fragment(), SensorEventListener {
         }
     }
 
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-        cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            }
-
-            imageCapture = ImageCapture.Builder().build()
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
-
-        }, ContextCompat.getMainExecutor(requireContext()))
-    }
-
-    private fun toggleCamera() {
-        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-            CameraSelector.DEFAULT_FRONT_CAMERA
-        } else {
-            CameraSelector.DEFAULT_BACK_CAMERA
-        }
-        startCamera()
-    }
-
-    private fun takePhoto() {
-        val imageCapture = imageCapture ?: return
-        val photoFile = File(requireContext().cacheDir, "temp_photo.jpg")
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    // 촬영 완료 시 바로 PictureResultFragment로 전환
-                    val bundle = Bundle().apply {
-                        putString("photoFilePath", photoFile.absolutePath)
-                        putBoolean("isFrontCamera", cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
-                    }
-                    findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
-                }
-            }
-        )
-    }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
