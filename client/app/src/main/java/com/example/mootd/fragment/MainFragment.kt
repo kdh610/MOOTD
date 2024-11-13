@@ -98,8 +98,6 @@ class MainFragment : Fragment(), SensorEventListener {
     private lateinit var guideRecyclerManager: GuideRecyclerManager
 
 
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -153,6 +151,9 @@ class MainFragment : Fragment(), SensorEventListener {
             btnMore.setOnClickListener { navigateTo(R.id.action_mainFragment_to_guideListFragment) }
             btnCloseHorizontalLayout.setOnClickListener { toggleHorizontalLayoutVisibility(isVisible = false) }
         }
+//        rotationSensor?.also {
+//            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+//        }
     }
 
     private fun navigateTo(actionId: Int) {

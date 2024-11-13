@@ -1,8 +1,11 @@
 package com.example.mootd.fragment
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -33,11 +36,15 @@ import com.bumptech.glide.request.transition.Transition
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions
 import com.example.mootd.api.ResponseData
 import com.example.mootd.api.RetrofitInstance
+import com.example.mootd.map.CustomClusterRenderer
+import com.example.mootd.map.GalleryViewActivity
+import com.google.maps.android.clustering.Cluster
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.view.DefaultClusterRenderer
 
 
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -70,11 +77,20 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         // 클러스터 매니저 초기화
         clusterManager = ClusterManager(requireContext(), mMap)
+        clusterManager.renderer = CustomClusterRenderer(requireContext(), mMap, clusterManager)
+
+
         mMap.setOnCameraIdleListener(clusterManager)
         mMap.setOnMarkerClickListener(clusterManager)
 
+        clusterManager.setOnClusterItemClickListener { item ->
+            openGalleryView(item)
+            true
+        }
+
         enableMyLocation()
     }
+
 
     private fun fetchPhotos(latitude: Double, longitude: Double, radius: Int) {
         RetrofitInstance.mapService.getPhotos(latitude, longitude, radius).enqueue(object : Callback<ResponseData> {
@@ -82,7 +98,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 if (response.isSuccessful) {
                     response.body()?.let { responseData ->
                         if (responseData.status == 200) {
-                            Log.d("API Response", "Successfully fetched photos: ${responseData.data.size} photos found")
                             for (photo in responseData.data) {
                                 addCustomMarker(photo)
                             }
@@ -105,43 +120,86 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun addCustomMarker(photo: PhotoResponse) {
         val position = LatLng(photo.latitude, photo.longitude)
 
-        // 이미지 다운로드 및 마커 설정
         Glide.with(this)
-            .asBitmap()  // 비트맵 형식으로 이미지 로드
-            .load(photo.maskImageUrl)  // 이미지 URL을 사용하여 로드
+            .asBitmap()
+            .load(photo.maskImageUrl)
+            .override(200, 200)
             .into(object : CustomTarget<Bitmap>() {
-                // 비트맵이 준비되었을 때 호출되는 메서드
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                    Log.d("CustomMarker", "Bitmap loaded successfully for photo ID: ${photo.photoId}")
 
-                    // 클러스터 아이템 생성
+                    val markerBitmap = createBubbleBitmap(resource)
+
                     val clusterItem = PhotoClusterItem(
                         position,
-                        "Photo ID: ${photo.photoId}",
+                        "Photo ID: ${photo.photoId}!!",
                         "Latitude: ${photo.latitude}, Longitude: ${photo.longitude}",
-                        photo.maskImageUrl
+                        photo.maskImageUrl,
+                        markerBitmap
                     )
 
-                    // 클러스터 매니저에 아이템 추가
-                    clusterManager.addItem(clusterItem)
 
-                    // 클러스터 업데이트
+                    clusterManager.addItem(clusterItem)
                     clusterManager.cluster()
-                    Log.d("CustomMarker", "Cluster item added for photo ID: ${photo.photoId}")
+
+                    mMap.addMarker(
+
+                        MarkerOptions()
+                            .position(position)
+                            .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
+
+                    )
                 }
 
                 // Glide가 이미지 로드를 중단할 때 호출되는 메서드
                 override fun onLoadCleared(placeholder: Drawable?) {
                     Log.d("CustomMarker", "Glide onLoadCleared called for photo ID: ${photo.photoId}")
-                    // 이미지 로드가 클리어되었을 때 아무 작업도 하지 않음
+
                 }
                 override fun onLoadFailed(errorDrawable: Drawable?) {
-                    // 이미지 로드 실패 시 로그 추가
                     Log.e("CustomMarker", "Failed to load image for photo ID: ${photo.photoId}")
                 }
             })
     }
 
+    private fun createBubbleBitmap(originalBitmap: Bitmap): Bitmap {
+
+        val size = 200
+        val croppedBitmap = cropToSquare(originalBitmap, size)
+
+        val borderWidth = 10
+        val offsetY = 25
+        val backgroundScaleFactor = 1.2f
+
+        val background = ContextCompat.getDrawable(requireContext(), R.drawable.bubble)
+        val backgroundWidth = (croppedBitmap.width * backgroundScaleFactor).toInt() + borderWidth * 2
+        val backgroundHeight = (croppedBitmap.height * backgroundScaleFactor).toInt() + borderWidth * 2
+        background?.setBounds(0, 0, backgroundWidth, backgroundHeight)
+
+        val bubbleBitmap = Bitmap.createBitmap(
+            backgroundWidth,
+            backgroundHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bubbleBitmap)
+
+        background?.draw(canvas)
+        val left = (backgroundWidth - croppedBitmap.width) / 2f
+        val top = (backgroundHeight - croppedBitmap.height) / 2f - offsetY
+        canvas.drawBitmap(croppedBitmap, left, top, null)
+
+        return bubbleBitmap
+    }
+
+    private fun cropToSquare(originalBitmap: Bitmap, size: Int): Bitmap {
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+        val cropSize = minOf(width, height)
+
+        val xOffset = (width - cropSize) / 2
+        val yOffset = (height - cropSize) / 2
+
+        return Bitmap.createBitmap(originalBitmap, xOffset, yOffset, cropSize, cropSize)
+    }
 
     private fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -165,7 +223,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 if (location != null) {
                     val currentLatLng = LatLng(location.latitude, location.longitude)
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, DEFAULT_ZOOM))
-                    mMap.addMarker(MarkerOptions().position(currentLatLng).title("My Location"))
+                    mMap.addMarker(MarkerOptions().position(currentLatLng))
+
                     Log.d("Location", "Fetching photos for location: Latitude = ${location.latitude}, Longitude = ${location.longitude}")
                     fetchPhotos(location.latitude, location.longitude, 10)
                 } else {
@@ -177,6 +236,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Toast.makeText(requireContext(), "Location access error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun openGalleryView(item: PhotoClusterItem) {
+        val intent = Intent(requireContext(), GalleryViewActivity::class.java)
+        intent.putExtra("photoUrl", item.getImageUrl())
+        Log.d("MapFragment", "Intent to open GalleryViewActivity with photoUrl: ${item.getImageUrl()}")
+        startActivity(intent)
+    }
+
+
 
 
     override fun onRequestPermissionsResult(

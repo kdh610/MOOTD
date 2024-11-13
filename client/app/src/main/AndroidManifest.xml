@@ -51,6 +51,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".map.GalleryViewActivity"
+            android:label="Gallery View" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCbtwpXNT5d7HnFf4xS1_5AWlMBtJcOQSk" />
