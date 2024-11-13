@@ -1,6 +1,5 @@
 package com.example.mootd.fragment
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -12,14 +11,17 @@ import com.example.mootd.R
 import com.example.mootd.adapter.GalleryAdapter
 import com.example.mootd.databinding.FragmentSearchBinding
 import android.content.Context
-import android.util.Log
-import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.api.SearchResponse
+import android.content.SharedPreferences
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.mootd.adapter.SearchHistoryAdapter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,7 +32,8 @@ class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
     private lateinit var galleryAdapter: GalleryAdapter
-
+    private lateinit var searchHistoryAdapter: SearchHistoryAdapter
+    private var searchHistory: MutableList<String> = mutableListOf()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,12 +46,21 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        loadSearchHistory()
 
         binding.etSearchQuery.requestFocus()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(binding.etSearchQuery, InputMethodManager.SHOW_IMPLICIT)
 
         binding.recyclerViewSearchResults.layoutManager = GridLayoutManager(requireContext(), 3)
+
+
+        searchHistoryAdapter = SearchHistoryAdapter(searchHistory,
+            onItemClick = { query -> setSearchQueryAndPerformSearch(query) },
+            onDeleteClick = { query -> deleteSearchHistory(query) }
+        )
+        binding.recyclerViewSearchHistory.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerViewSearchHistory.adapter = searchHistoryAdapter
 
         binding.btnSearch.setOnClickListener {
             performSearch()
@@ -70,16 +82,34 @@ class SearchFragment : Fragment() {
 
         // RecyclerView 설정
         binding.recyclerViewSearchResults.layoutManager = GridLayoutManager(context, 3)
+
+        binding.btnRetry.setOnClickListener { performSearch() }
     }
 
     private fun performSearch() {
         val query = binding.etSearchQuery.text.toString()
         if (query.isNotEmpty()) {
+            if (!searchHistory.contains(query)) {
+                searchHistory.add(query)
+                saveSearchHistory()  // 검색 기록 저장
+                searchHistoryAdapter.notifyDataSetChanged() // 어댑터 갱신
+            }
             searchPhotos(query)
             hideKeyboard()
         } else {
             Toast.makeText(context, "검색어를 입력해주세요", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun setSearchQueryAndPerformSearch(query: String) {
+        binding.etSearchQuery.setText(query)
+        performSearch()
+    }
+
+    private fun deleteSearchHistory(query: String) {
+        searchHistory.remove(query)
+        saveSearchHistory()  // 삭제 후 검색 기록 저장
+        searchHistoryAdapter.notifyDataSetChanged()
     }
 
     private fun hideKeyboard() {
@@ -88,34 +118,63 @@ class SearchFragment : Fragment() {
     }
 
     private fun searchPhotos(query: String) {
+        binding.errorLayout.visibility = View.GONE
         RetrofitInstance.guideSearchService.searchPhotosByTag(query).enqueue(object : Callback<SearchResponse> {
             override fun onResponse(call: Call<SearchResponse>, response: Response<SearchResponse>) {
                 if (response.isSuccessful) {
-                    val photoList = response.body()?.data?.mapNotNull { it.originImageUrl } ?: emptyList()
+                    val photoList = response.body()?.data?.map {
+                        Pair(it.id, it.originImageUrl) // imageId와 originImageUrl을 Pair로 저장
+                    } ?: emptyList()
 
                     if (photoList.isNotEmpty()) {
                         // 검색 결과가 있을 때
-                        galleryAdapter = GalleryAdapter(photoList) { imageUrl ->
-                            // 클릭 이벤트 처리 (필요에 따라 수정)
-                            Toast.makeText(context, "이미지 클릭: $imageUrl", Toast.LENGTH_SHORT).show()
+                        galleryAdapter = GalleryAdapter(photoList) { photoId, imageUrl ->
+                            val bundle = Bundle().apply {
+                                putString("photoId", photoId)
+                                putString("imageUrl", imageUrl)
+                            }
+                            findNavController().navigate(R.id.action_searchFragment_to_guideDetailFragment, bundle)
                         }
                         binding.recyclerViewSearchResults.adapter = galleryAdapter
                         binding.recyclerViewSearchResults.visibility = View.VISIBLE
                         binding.emptyTextView.visibility = View.GONE
+                        binding.recyclerViewSearchHistory.visibility = View.GONE
                     } else {
                         // 검색 결과가 없을 때
                         binding.recyclerViewSearchResults.visibility = View.GONE
                         binding.emptyTextView.visibility = View.VISIBLE
+                        binding.recyclerViewSearchHistory.visibility = View.GONE
                     }
                 } else {
-                    Toast.makeText(context, "서버 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                    showNetworkErrorMessage()
                 }
             }
 
             override fun onFailure(call: Call<SearchResponse>, t: Throwable) {
-                Toast.makeText(context, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                showNetworkErrorMessage()
             }
         })
+    }
+
+    private fun saveSearchHistory() {
+        val sharedPreferences = requireContext().getSharedPreferences("search_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val json = Gson().toJson(searchHistory) // 리스트를 JSON 문자열로 변환
+        editor.putString("search_history", json)
+        editor.apply()
+    }
+
+    private fun loadSearchHistory() {
+        val sharedPreferences = requireContext().getSharedPreferences("search_prefs", Context.MODE_PRIVATE)
+        val json = sharedPreferences.getString("search_history", null)
+        if (json != null) {
+            val type = object : TypeToken<MutableList<String>>() {}.type
+            searchHistory = Gson().fromJson(json, type) // JSON 문자열을 리스트로 변환
+        }
+    }
+
+    private fun showNetworkErrorMessage() {
+        binding.errorLayout.visibility = View.VISIBLE
     }
 
     override fun onDestroyView() {

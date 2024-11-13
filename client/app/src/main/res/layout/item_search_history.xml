@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/icon_history_button"
+        android:contentDescription="History Icon" />
+
+    <TextView
+        android:id="@+id/textHistory"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="8dp"
+        android:text="검색 기록"
+        android:textSize="16sp" />
+
+    <ImageButton
+        android:id="@+id/btnDeleteHistory"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/icon_close_button"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="삭제" />
+
+
+</LinearLayout>

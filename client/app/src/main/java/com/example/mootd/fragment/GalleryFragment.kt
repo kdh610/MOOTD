@@ -77,7 +77,7 @@ class GalleryFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        galleryAdapter = GalleryAdapter(imageList) { imagePath ->
+        galleryAdapter = GalleryAdapter(imageList){ imagePath ->
             // 클릭한 이미지 경로를 PictureDetailFragment로 전달하기 위해 Bundle 사용
             val bundle = Bundle().apply {
                 putString("imagePath", imagePath)
