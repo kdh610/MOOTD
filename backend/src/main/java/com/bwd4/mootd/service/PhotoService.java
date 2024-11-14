@@ -2,16 +2,13 @@ package com.bwd4.mootd.service;
 
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
-import com.bwd4.mootd.common.response.ApiResponse;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.domain.PhotoUsageHistory;
 import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.internal.UploadResult;
-import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
-import com.bwd4.mootd.dto.response.PhotoDTO;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
@@ -72,7 +69,19 @@ public class PhotoService {
         return Mono.fromCallable(() -> copyFileAndExtractMetaData(request))
                 .flatMap(result -> saveInitialPhotoMetadata(result, request))
                 .flatMap(this::processMaskAndUpdatePhoto)
+                .flatMap(photo -> analyzeImageTagAndUpdatePhoto(photo, request))
                 .subscribeOn(asyncScheduler);
+    }
+
+    private Mono<Void> analyzeImageTagAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
+        return aiService.analyzeImageTag(request)
+                .flatMap(response ->{
+                    photo.setTag(response.keywords());
+                    return photoRepository.save(photo);
+                })
+                .doOnSuccess(updatedPhoto -> log.info("태그가 추가된 Photo 객체: {}", updatedPhoto))
+                .then();
+
     }
 
     /**
@@ -80,15 +89,14 @@ public class PhotoService {
      * @param photo
      * @return
      */
-    private Mono<Void> processMaskAndUpdatePhoto(Photo photo) {
+    private Mono<Photo> processMaskAndUpdatePhoto(Photo photo) {
         return aiService.maskImage(photo.getOriginImageUrl())
                 .flatMap(maskBytes -> Mono.fromCallable(() -> s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING)))
                 .flatMap(maskUrl -> {
                     photo.setMaskImageUrl(maskUrl);
                     return photoRepository.save(photo);
                 })
-                .doOnSuccess(updatedPhoto -> log.info("마스크 이미지 추가 저장된 Photo 객체: {}", updatedPhoto))
-                .then();
+                .doOnSuccess(updatedPhoto -> log.info("마스크 이미지 추가 저장된 Photo 객체: {}", updatedPhoto));
     }
 
     /**
