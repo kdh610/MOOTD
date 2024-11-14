@@ -18,6 +18,14 @@ class CameraManager(
     private var imageCapture: ImageCapture? = null
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+    fun setCameraSelector(isFrontCamera: Boolean) {
+        cameraSelector = if (isFrontCamera) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        } else {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        }
+    }
+
     fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(fragment.requireContext())
         cameraProviderFuture.addListener({
@@ -48,7 +56,7 @@ class CameraManager(
         startCamera()
     }
 
-    fun takePhoto(onPhotoTaken: (String) -> Unit) {
+    fun takePhoto(onPhotoTaken: (String, Boolean) -> Unit) {
         val imageCapture = imageCapture ?: return
         val photoFile = File(fragment.requireContext().cacheDir, "temp_photo.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -62,7 +70,7 @@ class CameraManager(
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    onPhotoTaken(photoFile.absolutePath)
+                    onPhotoTaken(photoFile.absolutePath, cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA)
                 }
             }
         )

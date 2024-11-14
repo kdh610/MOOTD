@@ -83,6 +83,7 @@ class MainFragment : Fragment(), SensorEventListener {
 
 
     private lateinit var cameraExecutor: ExecutorService
+    private var isFrontCamera = false
 
 
     private var originalImageUrl: String? = null
@@ -116,6 +117,7 @@ class MainFragment : Fragment(), SensorEventListener {
         }
 
         cameraManager = CameraManager(this, binding)
+        cameraManager.setCameraSelector(isFrontCamera)
         guideOverlayManager = GuideOverlayManager(binding)
         guideRecyclerManager = GuideRecyclerManager(requireContext(), binding, guideOverlayManager) { originalUrl, personUrl, backgroundUrl ->
             originalImageUrl = originalUrl
@@ -151,9 +153,6 @@ class MainFragment : Fragment(), SensorEventListener {
             btnMore.setOnClickListener { navigateTo(R.id.action_mainFragment_to_guideListFragment) }
             btnCloseHorizontalLayout.setOnClickListener { toggleHorizontalLayoutVisibility(isVisible = false) }
         }
-//        rotationSensor?.also {
-//            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-//        }
     }
 
     private fun navigateTo(actionId: Int) {
@@ -168,13 +167,19 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private fun setupUI() {
         binding.btnCapture.setOnClickListener {
-            cameraManager.takePhoto { photoPath ->
-                val bundle = Bundle().apply { putString("photoFilePath", photoPath) }
+            cameraManager.takePhoto { photoPath, isFront ->
+                isFrontCamera = isFront
+                val bundle = Bundle().apply {
+                    putString("photoFilePath", photoPath)
+                    putBoolean("isFrontCamera", isFront)
+                }
+
                 findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
             }
         }
 
         binding.btnSwitchCamera.setOnClickListener {
+            isFrontCamera = !isFrontCamera
             cameraManager.toggleCamera()
         }
 
@@ -298,7 +303,7 @@ class MainFragment : Fragment(), SensorEventListener {
             val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat() // Pitch (x-axis)
             val roll = Math.toDegrees(orientation[2].toDouble()).toFloat() // Roll (y-axis)
 
-            Log.d("SensorData", "Pitch: $pitch, Roll: $roll")
+//            Log.d("SensorData", "Pitch: $pitch, Roll: $roll")
 
             // 카메라 위치 조정
             adjustCameraPosition(pitch, roll)
