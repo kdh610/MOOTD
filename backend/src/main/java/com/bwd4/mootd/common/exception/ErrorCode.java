@@ -11,7 +11,10 @@ public enum ErrorCode {
     NO_FILE_EXTENTION(HttpStatus.BAD_REQUEST,"S3003","파일 확장자가 없습니다."),
     INVALID_FILE_EXTENTION(HttpStatus.BAD_REQUEST,"S3004","유효하지않은 확장자입니다"),
     FAIL_DELETE_S3(HttpStatus.INTERNAL_SERVER_ERROR,"S3005","S3에 파일삭제 실패"),
-    RECENT_USAGE_NOT_FOUND(HttpStatus.NOT_FOUND,"R001","최근 사용한 이미지가 없습니다.")
+    RECENT_USAGE_NOT_FOUND(HttpStatus.NOT_FOUND,"R001","최근 사용한 이미지가 없습니다."),
+
+    //base64, s3업로드관련
+    INVALID_BASE64_DATA(HttpStatus.BAD_REQUEST, "B001","형태가 올바르지 않은 base64데이터입니다.")
     ;
 
 

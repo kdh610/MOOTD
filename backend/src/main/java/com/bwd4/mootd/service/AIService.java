@@ -1,5 +1,6 @@
 package com.bwd4.mootd.service;
 
+import com.bwd4.mootd.dto.internal.GuideLineModelResponseDTO;
 import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.response.AiTagDTO;
 import jakarta.annotation.PostConstruct;
@@ -25,6 +26,8 @@ public class AIService {
 
     private WebClient tagAIClient;
 
+    private WebClient guideLineAiClient;
+
     @PostConstruct
     private void init() {
         this.maskAIClient = WebClient.builder()
@@ -32,7 +35,7 @@ public class AIService {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 2MB로 설정
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
                 .build();
 
         this.tagAIClient = WebClient.builder()
@@ -40,7 +43,15 @@ public class AIService {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 2MB로 설정
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build();
+
+        this.guideLineAiClient = WebClient.builder()
+                .baseUrl("http://" + HOST + ":8002")
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
+                ))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
                 .build();
     }
 
@@ -73,5 +84,25 @@ public class AIService {
                 .accept(MediaType.APPLICATION_JSON) // JSON 응답 형식 설정
                 .retrieve()
                 .bodyToMono(AiTagDTO.class); // JSON 응답을 AiTagDTO로 매핑
+    }
+
+    /**
+     * 가이드라인을 생성한다.
+     * @param originImageFile
+     * @return
+     */
+    public Mono<GuideLineModelResponseDTO> makeGuideLine(MultipartFile originImageFile) {
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("file", originImageFile.getResource()) // MultipartFile의 Resource 사용
+                .header("Content-Disposition", "form-data; name=file; filename=" + originImageFile.getOriginalFilename())
+                .contentType(MediaType.parseMediaType(originImageFile.getContentType()));
+
+        return guideLineAiClient.post()
+                .uri("/process_image/")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .bodyValue(builder.build()) // MultipartBodyBuilder로 multipart/form-data 생성
+                .accept(MediaType.APPLICATION_JSON) // JSON 응답 형식 설정
+                .retrieve()
+                .bodyToMono(GuideLineModelResponseDTO.class); // 응답을 GuideLineModelResponseDTO로 매핑
     }
 }
