@@ -87,12 +87,11 @@ class PictureDetailFragment : Fragment() {
         }
 
         // 원본 이미지 저장
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "original.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "originalImage.png"))
 
-        // 추가 이미지 데이터 저장 (예시)
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay1.png"))
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay2.png"))
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "overlay3.png"))
+        // 추가 이미지 데이터 저장
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "personGuideImage.png"))
+        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "backgroundGuideImage.png"))
     }
 
     private fun loadBitmapFromPath(path: String): Bitmap {

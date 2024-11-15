@@ -18,33 +18,6 @@ class GuideListFragment : Fragment() {
     private var _binding: FragmentGuideListBinding? = null
     private val binding get() = _binding!!
 
-    private val guideImageList = listOf(
-        // 이미지 경로 추가
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg",
-        "https://i.pinimg.com/736x/d9/16/44/d9164496ef8a969477fe3c698694ecc5.jpg"
-
-    )
-
-    private val recentImageList = listOf(
-        // 최근 사용 이미지 경로 추가
-        "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh",
-        "https://play-lh.googleusercontent.com/ecAdZGRwbLxhEENJauE6hMizUdpGaDL3BqAhib9cVeYmTMJLSe6XbbykbCTY_SCXbva0k8kixbcP2FfSQxjh"
-    )
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -72,8 +45,8 @@ class GuideListFragment : Fragment() {
         // TabLayout과 ViewPager 연결
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "내가 생성"
-                else -> "최근 사용"
+                0 -> "MY"
+                else -> "RECENT"
             }
         }.attach()
 

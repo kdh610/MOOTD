@@ -1,16 +1,19 @@
 package com.bwd4.mootd.service;
 
+import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
+import com.bwd4.mootd.dto.response.AiTagDTO;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-
-import java.util.Map;
 
 @Service
 public class AIService {
@@ -18,12 +21,22 @@ public class AIService {
     @Value("${ai.host}")
     private String HOST;
 
-    private WebClient webClient;
+    private WebClient maskAIClient;
+
+    private WebClient tagAIClient;
 
     @PostConstruct
     private void init() {
-        this.webClient = WebClient.builder()
+        this.maskAIClient = WebClient.builder()
                 .baseUrl("http://" + HOST + ":8000")
+                .clientConnector(new ReactorClientHttpConnector(
+                        HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
+                ))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 2MB로 설정
+                .build();
+
+        this.tagAIClient = WebClient.builder()
+                .baseUrl("http://" + HOST + ":8001")
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
@@ -32,7 +45,7 @@ public class AIService {
     }
 
     public Mono<byte[]> maskImage(String url) {
-        return webClient.post()
+        return maskAIClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/process_image/")
                         .queryParam("url", url) // url을 query parameter로 추가
@@ -45,5 +58,20 @@ public class AIService {
                     dataBuffer.read(bytes);
                     return bytes;
                 });
+    }
+
+    public Mono<AiTagDTO> analyzeImageTag(KafkaPhotoUploadRequestDTO request) {
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("file", new ByteArrayResource(request.originImageData()))
+                .header("Content-Disposition", "form-data; name=file; filename=" + request.originImageFilename())
+                .contentType(MediaType.parseMediaType(request.contentType()));
+
+        return tagAIClient.post()
+                .uri("/upload-image/")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .bodyValue(builder.build()) // MultipartFile을 multipart/form-data로 전송
+                .accept(MediaType.APPLICATION_JSON) // JSON 응답 형식 설정
+                .retrieve()
+                .bodyToMono(AiTagDTO.class); // JSON 응답을 AiTagDTO로 매핑
     }
 }

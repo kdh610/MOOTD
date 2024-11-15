@@ -73,6 +73,10 @@ public class Photo {
         this.deviceId = deviceId;
     }
 
+    public void setTag(List<String> tag) {
+        this.tag = tag;
+    }
+
     // Getters, Setters, Constructors
 
     /**

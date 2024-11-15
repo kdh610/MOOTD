@@ -10,9 +10,9 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.mootd.R
 
 class GuideAdapter(
-    private var imageList: List<String>,
+    private var imageList: List<Pair<String?, String>>, // Pair<photoId, originImageUrl>
     private val layoutId: Int,
-    private val onItemClick: (String) -> Unit
+    private val onItemClick: (String?) -> Unit
 ) : RecyclerView.Adapter<GuideAdapter.GuideViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GuideViewHolder {
@@ -22,9 +22,9 @@ class GuideAdapter(
 
 
     override fun onBindViewHolder(holder: GuideViewHolder, position: Int) {
-        val imageUri = imageList[position]
+        val (photoId, originImageUrl) = imageList[position]
         Glide.with(holder.itemView.context)
-            .load(imageUri)
+            .load(originImageUrl)
             .centerCrop()
             .into(holder.imageView)
 
@@ -38,11 +38,11 @@ class GuideAdapter(
         }
 
         holder.itemView.setOnClickListener {
-            onItemClick(imageUri)
+            onItemClick(photoId ?: originImageUrl) // photoId가 없으면 originImageUrl 전달
         }
     }
 
-    fun updateData(newImageList: List<String>) {
+    fun updateData(newImageList: List<Pair<String?, String>>) {
         imageList = newImageList
         notifyDataSetChanged()
     }

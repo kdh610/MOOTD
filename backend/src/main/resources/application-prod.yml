@@ -9,6 +9,18 @@ spring:
       max-request-size: 10MB
 
 
+#카프카 설정 컨피그 파일로 대체
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER}  # Kafka 서버 주소
+#    consumer:
+#      auto-offset-reset: "earliest"       # 메시지를 처음부터 읽도록 설정
+#      key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+#      value-deserializer: "org.apache.kafka.common.serialization.JsonDeserializer"
+#      properties.spring.kafka.consumer.trusted.packages: "com.bwd4.mootd.dto.internal"  # 패키지 신뢰 설정
+#    producer:
+#      key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+#      value-serializer: "org.apache.kafka.common.serialization.JsonSerializer"
+
 
 cloud:
   aws:
@@ -26,3 +38,13 @@ springdoc:
 
 ai:
   host: ${HOST}
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    tags:
+      application: ${spring.application.name}

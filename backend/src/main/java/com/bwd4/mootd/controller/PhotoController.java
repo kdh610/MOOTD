@@ -6,19 +6,17 @@ import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.domain.Photo;
-import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
+import com.bwd4.mootd.infra.kafka.ProducerService;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -29,21 +27,20 @@ import java.util.List;
 public class PhotoController {
 
     private final PhotoService photoService;
+    private final ProducerService producerService;
 
     @Autowired
-    public PhotoController(PhotoService photoService) {
+    public PhotoController(PhotoService photoService, ProducerService producerService) {
         this.photoService = photoService;
+        this.producerService = producerService;
     }
 
-    //TODO 촬영 기기의 고유정보를 입력받아야함.
     @Operation(summary = "촬영 후 사진을 서버에 업로드하는 api", description = "촬영 사진을 서버로 업로드 합니다. !! 향후에 안드로이드 기기에서 가이드라인까지 생성한다면 가이드라인도 서버로 전송해야합니다.!!")
     @PostMapping(consumes = "multipart/form-data")
     public Mono<ResponseEntity<ApiResponse<String>>> uploadPhoto(@ModelAttribute PhotoUploadRequestDTO request) {
-        //1.일단 "OK"d응답 성공을 반환한다.
-        //2.입력받은 이미지를 S3에 업로드한다.
-        //3.입력받은 이미지에서 메타정보를 추출하여, 촬영시간, 위치정보(위도,경도)등을 추출한다.
         log.info("file is null = {}", request.originImageFile().isEmpty());
-        photoService.uploadPhotoLogics(request).subscribe();
+        // Kafka로 메시지를 전송
+        producerService.sendPhotoUploadRequest(request).subscribe();
         return Mono.just(new ResponseEntity<>(ApiResponse.success("서버 전송이 완료되었습니다.", null), HttpStatus.OK));
     }
 
@@ -89,6 +86,13 @@ public class PhotoController {
         return photoService.searchTag(tag)
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    @Operation(summary = "사진을 단일로 조회하는 API", description = "photoId를 사용해서 이미지를 단일 조회하는 API")
+    @GetMapping("/{photoId}")
+    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(@Parameter(description = "조회할 photoId") @PathVariable("photoId") String photoId) {
+        return photoService.findPhotoDetail(photoId)
+                .map(photoDetail -> ResponseEntity.ok(ApiResponse.success("photo 단일 조회 성공", photoDetail)));
     }
 
     @GetMapping("/test2")

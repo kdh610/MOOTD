@@ -1,13 +1,15 @@
 package com.bwd4.mootd.service;
 
+import com.bwd4.mootd.common.exception.BusinessException;
+import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.domain.PhotoUsageHistory;
+import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.internal.UploadResult;
-import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
-import com.bwd4.mootd.dto.response.PhotoDTO;
+import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoRepository;
@@ -24,12 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import org.springframework.mock.web.MockMultipartFile;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -55,55 +59,89 @@ public class PhotoService {
         this.aiService = aiService;
     }
 
-    public Mono<Void> uploadPhotoLogics(PhotoUploadRequestDTO request) {
-        log.info("in service image upload");
-        return Mono.fromCallable(() -> {
-                    byte[] fileBytes = request.originImageFile().getBytes();
-                    MultipartFile copiedFile = new MockMultipartFile(
-                            request.originImageFile().getName(),
-                            request.originImageFile().getOriginalFilename(),
-                            request.originImageFile().getContentType(),
-                            fileBytes
-                    );
-                    // 메타정보 추출
-                    Map<String, Object> metadata = extractMetadata(new ByteArrayInputStream(fileBytes));
-
-                    LocalDateTime createdAt = (LocalDateTime) metadata.get("CaptureTime");
-                    log.info(request.latitude() + " " + request.longitude());
-                    // 이미지 S3 업로드
-//                    String imageUrl = s3Service.upload(copiedFile, ImageType.ORIGINAL);
-                    String imageUrl = s3Service.upload(fileBytes,"파일명.png", ImageType.ORIGINAL);
-
-                    //마스크 처리
-                    return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
-                })
-                .flatMap(result ->
-                        // 마스크 처리
-                        aiService.maskImage(result.originImageUrl())
-                                .flatMap(maskBytes -> {
-                                    // 마스크 이미지를 S3에 업로드
-                                    return Mono.fromCallable(() -> {
-                                                return s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING);
-                                            })
-                                            .flatMap(maskUrl -> {
-                                                // MongoDB에 메타정보와 이미지 URL 저장
-                                                Photo photo = new Photo();
-                                                photo.setDeviceId(request.deviceId());
-                                                photo.setCreatedAt(result.createdAt());
-                                                photo.setCoordinates(result.longitude(), result.latitude());
-                                                photo.setOriginImageUrl(result.originImageUrl());
-                                                photo.setMaskImageUrl(maskUrl);
-
-                                                return photoRepository.save(photo)
-                                                        .doOnSuccess(savedPhoto -> log.info("MongoDB에 저장된 Photo 객체: {}", savedPhoto))
-                                                        .doOnError(error -> log.error("MongoDB 저장 중 오류 발생: ", error))
-                                                        .then();
-                                            });
-                                })
-                )
-                .doOnSuccess(v -> log.info("이미지 저장 완료"))
-                .doOnError(error -> log.error("오류 발생: ", error))
+    /**
+     * 이미지를 업로드하는 로직, 많은 ai모델을 활용합니다.
+     * @param request
+     * @return
+     */
+    @KafkaListener(topics = "photo-upload-topic", groupId = "photo-consumer-group")
+    public Mono<Void> uploadPhotoLogics(KafkaPhotoUploadRequestDTO request) {
+        return Mono.fromCallable(() -> copyFileAndExtractMetaData(request))
+                .flatMap(result -> saveInitialPhotoMetadata(result, request))
+                .flatMap(this::processMaskAndUpdatePhoto)
+                .flatMap(photo -> analyzeImageTagAndUpdatePhoto(photo, request))
                 .subscribeOn(asyncScheduler);
+    }
+
+    private Mono<Void> analyzeImageTagAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
+        return aiService.analyzeImageTag(request)
+                .flatMap(response ->{
+                    photo.setTag(response.keywords());
+                    return photoRepository.save(photo);
+                })
+                .doOnSuccess(updatedPhoto -> log.info("태그가 추가된 Photo 객체: {}", updatedPhoto))
+                .then();
+
+    }
+
+    /**
+     * masking처리하고 해당 이미지를 기존 mongoDB Document에 저장하는 메서드
+     * @param photo
+     * @return
+     */
+    private Mono<Photo> processMaskAndUpdatePhoto(Photo photo) {
+        return aiService.maskImage(photo.getOriginImageUrl())
+                .flatMap(maskBytes -> Mono.fromCallable(() -> s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING)))
+                .flatMap(maskUrl -> {
+                    photo.setMaskImageUrl(maskUrl);
+                    return photoRepository.save(photo);
+                })
+                .doOnSuccess(updatedPhoto -> log.info("마스크 이미지 추가 저장된 Photo 객체: {}", updatedPhoto));
+    }
+
+    /**
+     * 초기 originImageUrl를 기준으로 mongoDB에 저장하는 메서드
+     * @param result
+     * @param request
+     * @return
+     */
+    private Mono<Photo> saveInitialPhotoMetadata(UploadResult result, KafkaPhotoUploadRequestDTO request) {
+        Photo photo = new Photo();
+        photo.setDeviceId(request.deviceId());
+        photo.setCreatedAt(result.createdAt());
+        photo.setCoordinates(result.longitude(), result.latitude());
+        photo.setOriginImageUrl(result.originImageUrl());
+
+        return photoRepository.save(photo)
+                .doOnSuccess(savedPhoto -> log.info("초기 MongoDB에 저장된 Photo 객체: {}", savedPhoto))
+                .doOnError(error -> log.error("MongoDB 초기 저장 중 오류 발생: ", error));
+    }
+
+    /**
+     * S3에 업로드하기 위해 메타데이터를 추줄하는 메서드
+     *
+     * @param request
+     * @return
+     * @throws IOException
+     */
+    private UploadResult copyFileAndExtractMetaData(KafkaPhotoUploadRequestDTO request) throws IOException {
+        byte[] fileBytes = request.originImageData();
+        MultipartFile copiedFile = new MockMultipartFile(
+                request.name(),
+                request.originImageFilename(),
+                request.contentType(),
+                fileBytes
+        );
+        // 메타정보 추출
+        Map<String, Object> metadata = extractMetadata(new ByteArrayInputStream(fileBytes));
+
+        LocalDateTime createdAt = (LocalDateTime) metadata.get("CaptureTime");
+        log.info(request.latitude() + " " + request.longitude());
+        // 이미지 S3 업로드
+        String imageUrl = s3Service.upload(fileBytes, "파일명.png", ImageType.ORIGINAL);
+
+        //마스크 처리
+        return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
     }
 
     private Map<String, Object> extractMetadata(ByteArrayInputStream inputStream) {
@@ -144,6 +182,7 @@ public class PhotoService {
         }
         return metadataMap;
     }
+
     /**
      * 위도, 경도를 기반으로 반경(radius)에 존재하는 이미지를 반환한다.
      */
@@ -161,7 +200,9 @@ public class PhotoService {
 
     public Mono<List<PhotoUsage>> getRecentUsageByDeviceId(String deviceId) {
         return photoUsageHistoryRepository.findById(deviceId)
-                .map(PhotoUsageHistory::getPhotoUsageList);
+                .map(PhotoUsageHistory::getPhotoUsageList)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.RECENT_USAGE_NOT_FOUND)));
+
     }
 
     public Mono<Void> recordPhotoUsage(PhotoUsageRequestDTO request) {
@@ -202,21 +243,30 @@ public class PhotoService {
 
     /**
      * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
+     *
      * @param tag
      * @return
      */
-    public Flux<TagSearchResponseDTO> searchTag(String tag){
+    public Flux<TagSearchResponseDTO> searchTag(String tag) {
 
         return photoRepository.findByTagContaining(tag)
                 .map(Photo::toTagSearchResponseDTO);
     }
 
-    public Mono<Photo> searchId(String id){
+    public Mono<Photo> searchId(String id) {
 
         return photoRepository.findById(id)
                 .doOnNext(photo -> log.info("Fetched photo: {}", photo));
 
     }
 
-
+    public Mono<PhotoDetailDTO> findPhotoDetail(String photoId) {
+        return photoRepository.findById(photoId)
+                .map(photo -> new PhotoDetailDTO(photo.getId(),
+                        photo.getMaskImageUrl(),
+                        null,
+                        photo.getCoordinates().getY(),
+                        photo.getCoordinates().getX())
+                );
+    }
 }
