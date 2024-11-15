@@ -37,6 +37,8 @@ services:
       S3_ACCESSKEY : ${S3_ACCESSKEY}
       S3_SECRETKEY : ${S3_SECRETKEY}
       KAFKA_SERVER: ${KAFKA_SERVER}
+      ES_USERNAME : ${ES_USERNAME}
+      ES_PASSWORD : ${ES_PASSWORD}
     depends_on:
       - kafka  # Kafka가 먼저 시작된 후 Spring 앱 시작
 
