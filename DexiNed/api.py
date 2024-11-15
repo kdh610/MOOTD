@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 import shutil
 import os
+from fastapi.responses import JSONResponse
 from typing import List, Optional
 import cv2
 import numpy as np
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from models.person_segmenter import PersonSegmenter
 from models.edge_detector import EdgeDetector
 import tempfile
+import base64
 
 from utils.image_utils import save_image
 
@@ -19,71 +21,60 @@ app = FastAPI()
 segmenter = PersonSegmenter()
 edge_detector = EdgeDetector()
 
-
-class EdgeResponse(BaseModel):
+class ImageResponse(BaseModel):
     is_person: bool
-    person_edge_filename: Optional[str] = None
-    background_edge_filename: str
+    person_edge: Optional[str] = None  # base64 문자열
+    background_edge: str  # base64 문자열
 
+def image_to_base64(image):
+    """OpenCV 이미지를 base64 문자열로 변환"""
+    success, encoded_image = cv2.imencode('.png', image)
+    if success:
+        return base64.b64encode(encoded_image.tobytes()).decode('utf-8')
+    return None
 
 @app.post("/process_image/")
 async def process_image(file: UploadFile = File(...)):
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
-        shutil.copyfileobj(file.file, tmp)
-        tmp_path = tmp.name
+    # 업로드된 파일을 메모리에서 읽기
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     try:
-        person_image, background_image, mask = segmenter.segment_person(tmp_path)
-
-        output_dir = "processed_images"
-        os.makedirs(output_dir, exist_ok=True)
-
-        base_name = f"result_{os.path.basename(tmp_path)}"
+        person_image, background_image, mask = segmenter.segment_person(img)
 
         if person_image is not None:
-            person_filename = f"person_{base_name}"
-            background_filename = f"background_{base_name}"
-
+            # 사람이 감지된 경우
             person_avg, person_fused = edge_detector.detect_edges(
                 cv2.cvtColor(person_image, cv2.COLOR_RGB2BGR),
                 edge_color=(0, 0, 255)
             )
-            save_image(person_fused, os.path.join(output_dir, person_filename))
+            person_base64 = image_to_base64(person_fused)
 
             background_avg, background_fused = edge_detector.detect_edges(
                 cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR)
             )
-            save_image(background_fused, os.path.join(output_dir, background_filename))
+            background_base64 = image_to_base64(background_fused)
 
-            return EdgeResponse(
+            return ImageResponse(
                 is_person=True,
-                person_edge_filename=person_filename,
-                background_edge_filename=background_filename
+                person_edge=person_base64,
+                background_edge=background_base64
             )
         else:
-            background_filename = f"background_{base_name}"
+            # 사람이 감지되지 않은 경우
             background_avg, background_fused = edge_detector.detect_edges(
                 cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR)
             )
-            save_image(background_fused, os.path.join(output_dir, background_filename))
+            background_base64 = image_to_base64(background_fused)
 
-            return EdgeResponse(
+            return ImageResponse(
                 is_person=False,
-                background_edge_filename=background_filename
+                background_edge=background_base64
             )
 
-    finally:
-        os.unlink(tmp_path)
-
-
-@app.get("/download/{filename}")
-async def download_file(filename: str):
-    file_path = f"processed_images/{filename}"
-    if os.path.exists(file_path):
-        return FileResponse(
-            path=file_path,
-            filename=filename,
-            media_type='image/png',
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
         )
-    return {"error": "File not found"}
