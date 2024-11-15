@@ -1,0 +1,44 @@
+
+mongo-url = "mongodb://root:root@mongo1:27017,mongo2:27017/admin?replicaSet=replication"
+elasticsearch-urls = ["http://es01:9200"]
+elasticsearch-user=""
+elasticsearch-password=""
+direct-read-namespace=mongo-url = [ "db.collection", "test.test"]
+dropped-collection=false
+dropped-databases=false
+resume=false
+resume-write-unsafe=true
+index-as-update=true
+index-oplog-time=true
+verbose=true
+
+[[script]]
+script="""
+module.exports=function(doc,ns){
+    doc._meta_monstache={index: ns.replace(".","-")};
+    return doc;
+}
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
