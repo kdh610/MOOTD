@@ -9,6 +9,7 @@ import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
+import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import com.bwd4.mootd.infra.kafka.ProducerService;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,18 +77,59 @@ public class PhotoController {
                 .map(list -> ResponseEntity.ok(ApiResponse.success("최근 사용한 이미지 조회 성공", list)));
     }
 
-    /**
+    /** MongoDB
      * 태그를 검색하면 태그가 포함된 사진데이터를 응답하는 controller
      *
      * @param tag
+     * @returngin
+     */
+    @GetMapping("/mongo/tag")
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
+        log.info("tag: {}", tag);
+        return photoService.findMongoByTag(tag)
+                .collectList()
+                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    /** MongoDB
+     * 태그를 검색에 따라 limit수만큼 반환
+     * @param tag
      * @return
      */
-    @GetMapping("/tag")
-    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(
-            @RequestParam(value = "tag") String tag) {
+    @GetMapping("/mongo/limit/tag")
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageMongoByTag(@RequestParam(value = "tag") String tag, @RequestParam(value = "limit")int limit) {
         log.info("tag: {}", tag);
 
-        return photoService.searchTag(tag)
+        return photoService.findMongoByTagContainingWithLimit(tag, limit)
+                .collectList()
+                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    /** ElasticSearch
+     * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
+     * @param tag
+     * @param limit
+     * @return
+     */
+    @GetMapping("/es/limit/tag")
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageEsByTagLimit(@RequestParam(value = "tag") String tag, @RequestParam(value = "limit")int limit) {
+        log.info("tag: {}", tag);
+
+        return photoService.findEsByTagWithLimit(tag, limit)
+                .collectList()
+                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
+    }
+
+    /** ElasticSearch
+     * 태그검색에 따라 모든 데이터 반환
+     * @param tag
+     * @return
+     */
+    @GetMapping("/es/tag")
+    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageEsByTag(@RequestParam(value = "tag") String tag) {
+        log.info("tag: {}", tag);
+
+        return photoService.findEsByTag(tag)
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
@@ -107,18 +149,4 @@ public class PhotoController {
         return photoService.makeGuideLine(originImageFile)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("가이드라인 생성 성공", response)));
     }
-
-    @GetMapping("/test2")
-    public Mono<ResponseEntity<ApiResponse<Photo>>> getImageByName(@RequestParam(value = "id") String id) {
-
-        log.info("id: {}", id);
-        return photoService.searchId(id)
-                .map(photo -> {
-                    ApiResponse<Photo> response = ApiResponse.success(photo);
-                    return ResponseEntity.ok(response);
-                })
-                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(400, "Photo not found", null)));
-    }
-
 }

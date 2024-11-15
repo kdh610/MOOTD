@@ -2,12 +2,17 @@ spring:
   data:
     mongodb:
       uri: mongodb://${DB_USERNAME}:${DB_PASSWORD}@${HOST}:27017/mootd?authSource=admin
+    elasticsearch:
+      repositories:
+        enabled: true
+      username: ${ES_USERNAME}
+      password: ${ES_PASSWORD}
+      uris: k11a105.p.ssafy.io:9200
 
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-
 
 #카프카 설정 컨피그 파일로 대체
   kafka:
@@ -20,6 +25,7 @@ spring:
 #    producer:
 #      key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
 #      value-serializer: "org.apache.kafka.common.serialization.JsonSerializer"
+
 
 
 cloud:
@@ -48,3 +54,4 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+

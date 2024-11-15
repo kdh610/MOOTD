@@ -2,9 +2,7 @@ package com.bwd4.mootd.service;
 
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
-import com.bwd4.mootd.domain.Photo;
-import com.bwd4.mootd.domain.PhotoUsage;
-import com.bwd4.mootd.domain.PhotoUsageHistory;
+import com.bwd4.mootd.domain.*;
 import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
@@ -12,7 +10,9 @@ import com.bwd4.mootd.dto.response.GuideLineResponseDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
+import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import com.bwd4.mootd.enums.ImageType;
+import com.bwd4.mootd.repository.PhotoElasticSearchRepository;
 import com.bwd4.mootd.repository.PhotoRepository;
 import com.bwd4.mootd.repository.PhotoUsageHistoryRepository;
 import com.drew.imaging.ImageMetadataReader;
@@ -27,6 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,15 +54,20 @@ public class PhotoService {
     private final Scheduler asyncScheduler; // 비동기 스케줄러 주입
     private final PhotoUsageHistoryRepository photoUsageHistoryRepository;
     private final AIService aiService;
+    private final ReactiveMongoTemplate reactiveMongoTemplate;
+    private final PhotoElasticSearchRepository photoElasticSearchRepository;
+
+
 
     @Autowired
-    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler,
-                        PhotoUsageHistoryRepository photoUsageHistoryRepository, AIService aiService) {
+    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler, PhotoUsageHistoryRepository photoUsageHistoryRepository, AIService aiService, ReactiveMongoTemplate reactiveMongoTemplate, PhotoElasticSearchRepository photoElasticSearchRepository) {
         this.photoRepository = photoRepository;
         this.s3Service = s3Service;
         this.asyncScheduler = asyncScheduler;
         this.photoUsageHistoryRepository = photoUsageHistoryRepository;
         this.aiService = aiService;
+        this.reactiveMongoTemplate = reactiveMongoTemplate;
+        this.photoElasticSearchRepository = photoElasticSearchRepository;
     }
 
     /**
@@ -263,24 +271,59 @@ public class PhotoService {
 
     }
 
-    /**
-     * 태그를 검색하면 태그가 포함된 mongodb에서 사진데이터를 응답하는 service
+    /** MongoDB
+     * 태그를 검색하면 태그가 포함된 mongodb에서 모든 사진데이터를 응답하는 service
      *
      * @param tag
      * @return
      */
-    public Flux<TagSearchResponseDTO> searchTag(String tag) {
+    public Flux<TagSearchResponseDTO> findMongoByTag(String tag) {
 
         return photoRepository.findByTagContaining(tag)
                 .map(Photo::toTagSearchResponseDTO);
     }
 
-    public Mono<Photo> searchId(String id) {
+    /** MongoDB
+     * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
+     * @param tag
+     * @param limit
+     * @return
+     */
+    public Flux<TagSearchResponseDTO> findMongoByTagContainingWithLimit(String tag, int limit) {
+        // Create a query to find PhotoTest with the given tag
+        Query query = new Query(Criteria.where("tag").regex(tag));
 
-        return photoRepository.findById(id)
-                .doOnNext(photo -> log.info("Fetched photo: {}", photo));
+        // Apply limit
+        query.limit(limit);
 
+        // Execute the query with ReactiveMongoTemplate
+        return reactiveMongoTemplate.find(query, Photo.class)
+                .map(Photo::toTagSearchResponseDTO);
     }
+
+    /** ElasticSearch
+     * 태그검색에 따라 모든 데이터 반환
+     * @param tag
+     * @return
+     */
+    public Flux<TagSearchResponseDTO> findEsByTag(String tag) {
+        return photoElasticSearchRepository.findByTag(tag)
+                .map(PhotoEs::toTagSearchResponseDTO);
+    }
+
+    /** ElasticSearch
+     * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
+     * @param tag
+     * @param limit
+     * @return
+     */
+    public Flux<TagSearchResponseDTO> findEsByTagWithLimit(String tag, int limit) {
+        return photoElasticSearchRepository.findByTag(tag).take(limit)
+                .map(PhotoEs::toTagSearchResponseDTO);
+    }
+
+
+
 
     public Mono<PhotoDetailDTO> findPhotoDetail(String photoId) {
         return photoRepository.findById(photoId)
