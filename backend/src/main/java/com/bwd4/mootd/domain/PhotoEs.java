@@ -5,9 +5,11 @@ import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,39 +17,39 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "photo_test")
-public class PhotoTest {
+@Document(indexName = "mootd-photo_test")
+public class PhotoEs {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
 
-    @Field("device_id")
+    @Field(type = FieldType.Text)
     private String deviceId;//기계 아이디
 
-    private GeoJsonPoint coordinates; // GeoJSON 포인트 타입 사용
+    //private GeoJsonPoint coordinates; // GeoJSON 포인트 타입 사용
 
+    @Field(type = FieldType.Text)
     private List<String> tag = new ArrayList<>();//이미지 분석 후 생성되는 태그
 
-    @Field("created_at")
-    private LocalDateTime createdAt;//촬영시간
 
-    @Field("name")
+    //private LocalDateTime createdAt;//촬영시간
+
     private String name;
 
-    @Field("origin_image_url")
+    @Field(type =FieldType.Text)
     private String originImageUrl;
 
-    @Field("guide_image_url")
+    @Field(type =FieldType.Text)
     private String guideImageUrl;
 
-    @Field("mask_image_url")
+    @Field(type =FieldType.Text)
     private String maskImageUrl;
 
     private Boolean flag;
 
     private Long usageCount;
 
-    public TagSearchTestDTO toTagSearchTestDTO(){
-        return TagSearchTestDTO.builder()
+    public TagSearchResponseDTO toTagSearchResponseDTO(){
+        return TagSearchResponseDTO.builder()
                 .id(this.id)
                 .tag(this.tag)
                 .originImageUrl(this.originImageUrl)

@@ -32,6 +32,14 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
+    //elastic search
+    // Spring Data Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    // Elasticsearch Client
+    implementation 'co.elastic.clients:elasticsearch-java:8.13.4' // Elasticsearch Java Client
+    // Jackson (필요한 경우 사용)
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+
     //프로메테우스
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
