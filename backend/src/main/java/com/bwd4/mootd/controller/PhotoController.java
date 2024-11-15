@@ -80,7 +80,7 @@ public class PhotoController {
     /**
      * 태그를 검색하면 태그가 포함된 사진데이터를 응답하는 controller
      * @param tag
-     * @return
+     * @returngin
      */
     @GetMapping("/tag")
     public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
