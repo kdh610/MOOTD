@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .  # Dockerfile이 있는 디렉토리
+    container_name: guide
+    ports:
+      - "8002:3000"  # 로컬 포트 8001을 컨테이너의 80 포트로 매핑
+    command: ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "3000"]
