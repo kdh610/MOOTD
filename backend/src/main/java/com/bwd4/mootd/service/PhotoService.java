@@ -74,17 +74,32 @@ public class PhotoService {
                 .flatMap(result -> saveInitialPhotoMetadata(result, request))
                 .flatMap(this::processMaskAndUpdatePhoto)
                 .flatMap(photo -> analyzeImageTagAndUpdatePhoto(photo, request))
+                .flatMap(photo -> makeGuideLineAndUpdatePhoto(photo, request))
                 .subscribeOn(asyncScheduler);
     }
 
-    private Mono<Void> analyzeImageTagAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
+    private Mono<Void> makeGuideLineAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
+        return this.makeGuideLine(
+                new MockMultipartFile(  request.name(),
+                    request.originImageFilename(),
+                    request.contentType(),
+                    request.originImageData()))
+                .flatMap(guideLineUrls -> {
+                            photo.setPersonGuidelineUrl(guideLineUrls.personGuideLineURL());
+                            photo.setBackgroundGuidelineUrl(guideLineUrls.backgroundGuideLineURL());
+                            return photoRepository.save(photo);
+                        })
+                .doOnSuccess(updatedPhoto -> log.info("가이드라인 추가된 Photo 객체: {}", updatedPhoto))
+                .then();
+    }
+
+    private Mono<Photo> analyzeImageTagAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
         return aiService.analyzeImageTag(request)
                 .flatMap(response -> {
                     photo.setTag(response.keywords());
                     return photoRepository.save(photo);
                 })
-                .doOnSuccess(updatedPhoto -> log.info("태그가 추가된 Photo 객체: {}", updatedPhoto))
-                .then();
+                .doOnSuccess(updatedPhoto -> log.info("태그가 추가된 Photo 객체: {}", updatedPhoto));
 
     }
 
@@ -303,32 +318,4 @@ public class PhotoService {
                 .subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업을 별도 스레드 풀에서 처리
                 .onErrorMap(IOException.class, e -> new RuntimeException("S3 업로드 실패", e));
     }
-
-//    public Mono<GuideLineResponseDTO> makeGuideLine(MultipartFile originImageFile) {
-//        //1. ai서버에 요청을 보내서 값을 받아옴(person_edge, background_edge 필드)
-//
-//        return aiService.makeGuideLine(originImageFile)
-//                .flatMap(afterModel -> {
-//                            //2. background_edge필드부터 null이 아니면 s3에 업로드한뒤 url을 반환받는다.
-//                            //3. person_edge필드가 null이 아니면 s3에 업로드한뒤 url을 반환받는다.
-//                            String backgroundGuideUrl = null;
-//                            String personGuideUrl = null;
-//                            try {
-//                                if (afterModel.background_edge() != null) {
-//                                    backgroundGuideUrl = s3Service.uploadBase64(afterModel.background_edge(),
-//                                            "backgroundGuideLine.png", ImageType.BACKGROUND);
-//                                }
-//
-//                                if (afterModel.person_edge() != null) {
-//                                    personGuideUrl = s3Service.uploadBase64(afterModel.person_edge(),
-//                                            "personGuideLine.png", ImageType.PEOPLE);
-//                                }
-//                            } catch (IOException e) {
-//                                throw new RuntimeException(e);
-//                            }
-//                            return Mono.just(new GuideLineResponseDTO(personGuideUrl, backgroundGuideUrl));
-//                        }
-//                );
-//        //4. GuideLineResponseDTO을 생성하며 값을 넣고 반환한다.
-//    }
 }

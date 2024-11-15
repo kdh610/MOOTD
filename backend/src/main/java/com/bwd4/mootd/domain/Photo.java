@@ -38,6 +38,11 @@ public class Photo {
     @Field("guide_image_url")
     private String guideImageUrl;
 
+    @Field("person_guideline_url")
+    private String personGuidelineUrl;
+
+    @Field("background_guideline_url")
+    private String backgroundGuidelineUrl;
     @Field("mask_image_url")
     private String maskImageUrl;
 
@@ -63,6 +68,14 @@ public class Photo {
 
     public void setGuideImageUrl(String guideImageUrl) {
         this.guideImageUrl = guideImageUrl;
+    }
+
+    public void setPersonGuidelineUrl(String personGuidelineUrl) {
+        this.personGuidelineUrl = personGuidelineUrl;
+    }
+
+    public void setBackgroundGuidelineUrl(String backgroundGuidelineUrl) {
+        this.backgroundGuidelineUrl = backgroundGuidelineUrl;
     }
 
     public void setMaskImageUrl(String maskImageUrl) {
