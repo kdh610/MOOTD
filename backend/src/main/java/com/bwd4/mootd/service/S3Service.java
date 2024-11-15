@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.enums.ImageType;
+import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -111,6 +112,29 @@ public class S3Service {
             throw new BusinessException(ErrorCode.FAIL_DELETE_S3);
         }
 
+    }
+
+    public String uploadBase64(String base64Data, String originalFilename, ImageType imageType) throws IOException {
+        if (base64Data == null || base64Data.isEmpty() || originalFilename == null) {
+            throw new BusinessException(ErrorCode.EMPTY_FILE);
+        }
+
+        // Base64 디코딩
+        byte[] decodedBytes = decodeBase64(base64Data);
+
+        // 파일 타입 추출
+        String contentType = "image/" + originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+
+        // 기존 메서드를 재사용하여 업로드
+        return this.uploadImage(new ByteArrayInputStream(decodedBytes), originalFilename, decodedBytes.length, contentType, imageType);
+    }
+
+    private byte[] decodeBase64(String base64Data) {
+        try {
+            return Base64.getDecoder().decode(base64Data);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_BASE64_DATA);
+        }
     }
 
 

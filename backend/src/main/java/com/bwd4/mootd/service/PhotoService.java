@@ -8,6 +8,7 @@ import com.bwd4.mootd.domain.PhotoUsageHistory;
 import com.bwd4.mootd.dto.internal.KafkaPhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.internal.UploadResult;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
+import com.bwd4.mootd.dto.response.GuideLineResponseDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 @Slf4j
@@ -51,7 +53,8 @@ public class PhotoService {
     private final AIService aiService;
 
     @Autowired
-    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler, PhotoUsageHistoryRepository photoUsageHistoryRepository, AIService aiService) {
+    public PhotoService(PhotoRepository photoRepository, S3Service s3Service, Scheduler asyncScheduler,
+                        PhotoUsageHistoryRepository photoUsageHistoryRepository, AIService aiService) {
         this.photoRepository = photoRepository;
         this.s3Service = s3Service;
         this.asyncScheduler = asyncScheduler;
@@ -61,6 +64,7 @@ public class PhotoService {
 
     /**
      * 이미지를 업로드하는 로직, 많은 ai모델을 활용합니다.
+     *
      * @param request
      * @return
      */
@@ -75,7 +79,7 @@ public class PhotoService {
 
     private Mono<Void> analyzeImageTagAndUpdatePhoto(Photo photo, KafkaPhotoUploadRequestDTO request) {
         return aiService.analyzeImageTag(request)
-                .flatMap(response ->{
+                .flatMap(response -> {
                     photo.setTag(response.keywords());
                     return photoRepository.save(photo);
                 })
@@ -86,12 +90,14 @@ public class PhotoService {
 
     /**
      * masking처리하고 해당 이미지를 기존 mongoDB Document에 저장하는 메서드
+     *
      * @param photo
      * @return
      */
     private Mono<Photo> processMaskAndUpdatePhoto(Photo photo) {
         return aiService.maskImage(photo.getOriginImageUrl())
-                .flatMap(maskBytes -> Mono.fromCallable(() -> s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING)))
+                .flatMap(maskBytes -> Mono.fromCallable(
+                        () -> s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING)))
                 .flatMap(maskUrl -> {
                     photo.setMaskImageUrl(maskUrl);
                     return photoRepository.save(photo);
@@ -101,6 +107,7 @@ public class PhotoService {
 
     /**
      * 초기 originImageUrl를 기준으로 mongoDB에 저장하는 메서드
+     *
      * @param result
      * @param request
      * @return
@@ -269,4 +276,59 @@ public class PhotoService {
                         photo.getCoordinates().getX())
                 );
     }
+
+    public Mono<GuideLineResponseDTO> makeGuideLine(MultipartFile originImageFile) {
+        return aiService.makeGuideLine(originImageFile)
+                .flatMap(afterModel -> {
+                    // background_edge 업로드
+                    Mono<String> backgroundGuideUrlMono = uploadEdgeToS3(afterModel.background_edge(),
+                            "backgroundGuideLine.png", ImageType.BACKGROUND);
+
+                    // person_edge 업로드
+                    Mono<String> personGuideUrlMono = uploadEdgeToS3(afterModel.person_edge(),
+                            "personGuideLine.png", ImageType.PEOPLE);
+
+                    // 두 작업 완료 후 결과 조합
+                    return Mono.zip(backgroundGuideUrlMono, personGuideUrlMono)
+                            .map(tuple -> new GuideLineResponseDTO(tuple.getT2(), tuple.getT1()));
+                });
+    }
+
+    // 블로킹 작업을 비동기로 처리하는 S3 업로드 메서드
+    private Mono<String> uploadEdgeToS3(String edgeData, String fileName, ImageType imageType) {
+        if (edgeData == null) {
+            return Mono.just(null); // edgeData가 없으면 null 반환
+        }
+        return Mono.fromCallable(() -> s3Service.uploadBase64(edgeData, fileName, imageType))
+                .subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업을 별도 스레드 풀에서 처리
+                .onErrorMap(IOException.class, e -> new RuntimeException("S3 업로드 실패", e));
+    }
+
+//    public Mono<GuideLineResponseDTO> makeGuideLine(MultipartFile originImageFile) {
+//        //1. ai서버에 요청을 보내서 값을 받아옴(person_edge, background_edge 필드)
+//
+//        return aiService.makeGuideLine(originImageFile)
+//                .flatMap(afterModel -> {
+//                            //2. background_edge필드부터 null이 아니면 s3에 업로드한뒤 url을 반환받는다.
+//                            //3. person_edge필드가 null이 아니면 s3에 업로드한뒤 url을 반환받는다.
+//                            String backgroundGuideUrl = null;
+//                            String personGuideUrl = null;
+//                            try {
+//                                if (afterModel.background_edge() != null) {
+//                                    backgroundGuideUrl = s3Service.uploadBase64(afterModel.background_edge(),
+//                                            "backgroundGuideLine.png", ImageType.BACKGROUND);
+//                                }
+//
+//                                if (afterModel.person_edge() != null) {
+//                                    personGuideUrl = s3Service.uploadBase64(afterModel.person_edge(),
+//                                            "personGuideLine.png", ImageType.PEOPLE);
+//                                }
+//                            } catch (IOException e) {
+//                                throw new RuntimeException(e);
+//                            }
+//                            return Mono.just(new GuideLineResponseDTO(personGuideUrl, backgroundGuideUrl));
+//                        }
+//                );
+//        //4. GuideLineResponseDTO을 생성하며 값을 넣고 반환한다.
+//    }
 }
