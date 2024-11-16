@@ -17,7 +17,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(indexName = "mootd-photo_test")
+@Document(indexName = "mootd-photo")
 public class PhotoEs {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
