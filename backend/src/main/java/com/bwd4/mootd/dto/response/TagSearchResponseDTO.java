@@ -17,5 +17,6 @@ public class TagSearchResponseDTO {
     private String originImageUrl;
     private String guideImageUrl;
     private String maskImageUrl;
-
+    private String personGuidelineUrl;
+    private String backgroundGuidelineUrl;
 }

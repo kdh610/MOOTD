@@ -44,6 +44,12 @@ public class PhotoEs {
     @Field(type =FieldType.Text)
     private String maskImageUrl;
 
+    @Field(type =FieldType.Text)
+    private String personGuidelineUrl;
+
+    @Field(type =FieldType.Text)
+    private String backgroundGuidelineUrl;
+
     private Boolean flag;
 
     private Long usageCount;
@@ -52,9 +58,9 @@ public class PhotoEs {
         return TagSearchResponseDTO.builder()
                 .id(this.id)
                 .tag(this.tag)
-                .originImageUrl(this.originImageUrl)
-                .guideImageUrl(this.guideImageUrl)
                 .maskImageUrl(this.maskImageUrl)
+                .personGuidelineUrl(this.personGuidelineUrl)
+                .backgroundGuidelineUrl(this.backgroundGuidelineUrl)
                 .build();
     }
 
