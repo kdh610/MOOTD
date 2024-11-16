@@ -143,7 +143,7 @@ public class PhotoController {
     }
 
     @Operation(summary = "가이드라인 생성 api")
-    @PostMapping(value = "/guild", consumes = "multipart/form-data")
+    @PostMapping(value = "/guide", consumes = "multipart/form-data")
     public Mono<ResponseEntity<ApiResponse<GuideLineResponseDTO>>> makeGuideLine(
             @RequestPart @Parameter(description = "가이드라인을 생성할 파일") MultipartFile originImageFile) {
         return photoService.makeGuideLine(originImageFile)
