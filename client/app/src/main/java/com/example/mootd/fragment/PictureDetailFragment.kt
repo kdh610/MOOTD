@@ -6,15 +6,24 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.mootd.R
+import com.example.mootd.api.RetrofitInstance
+import com.example.mootd.api.GuideResult
 import com.example.mootd.databinding.FragmentPictureDetailBinding
-import kotlinx.coroutines.CoroutineScope
+import com.example.mootd.viewmodel.GuideOverlayViewModel
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,6 +38,8 @@ class PictureDetailFragment : Fragment() {
 
     private var _binding: FragmentPictureDetailBinding? = null
     private val binding get() = _binding!!
+
+    private val guideOverlayViewModel: GuideOverlayViewModel by activityViewModels()
 
     private val imagePath: String by lazy {
         arguments?.getString("imagePath") ?: ""
@@ -58,16 +69,27 @@ class PictureDetailFragment : Fragment() {
 
         binding.createGuideButton.setOnClickListener{
             showLoadingOverlay()
-            CoroutineScope(Dispatchers.IO).launch {
-                saveImageToInternalStorage()
+            lifecycleScope.launch {
+                try {
+                    val response = uploadImageAndCreateGuide(imagePath)
+                    if (response != null) {
+                        saveGuideImagesToStorage(response.personGuideLineURL, response.backgroundGuideLineURL)
+                        guideOverlayViewModel.setGuideImages(
+                            originalUrl = imagePath,
+                            personUrl = response.personGuideLineURL,
+                            backgroundUrl = response.backgroundGuideLineURL
+                        )
+                        findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
+                    } else {
+                        showToast("가이드라인 생성에 실패했습니다.")
+                    }
+                } catch (e: Exception) {
+                    Log.e("PictureDetailFragment", "Error creating guide: ${e.message}")
+                    showToast("네트워크 오류가 발생했습니다.")
+                } finally {
+                    hideLoadingOverlay()
+                }
             }
-            Handler(Looper.getMainLooper()).postDelayed({
-                hideLoadingOverlay()
-                findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
-                findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
-            }, 3000) // 3초 딜레이
-//            findNavController().currentBackStackEntry?.savedStateHandle?.set("overlayImagePath", imagePath)
-//            findNavController().navigate(R.id.action_pictureDetailFragment_to_mainFragment)
         }
 
     }
@@ -79,24 +101,58 @@ class PictureDetailFragment : Fragment() {
     private fun hideLoadingOverlay() {
         binding.loadingOverlay.visibility = View.GONE
     }
-    private suspend fun saveImageToInternalStorage() {
-        val folderName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val folder = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "$folderRootPath/$folderName")
-        if (!folder.exists()) {
-            folder.mkdirs()
+
+    private suspend fun uploadImageAndCreateGuide(imagePath: String): GuideResult? {
+        return withContext(Dispatchers.IO) {
+            val imageFile = File(imagePath)
+            val requestBody = imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val imagePart = MultipartBody.Part.createFormData("originImageFile", imageFile.name, requestBody)
+
+            val response = RetrofitInstance.guideCreateService.createGuide(imagePart)
+            if (response.isSuccessful) {
+                response.body()?.data
+            } else {
+                Log.e("PictureDetailFragment", "API Error: ${response.errorBody()?.string()}")
+                null
+            }
         }
+    }
 
-        // 원본 이미지 저장
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "originalImage.png"))
+    private suspend fun saveGuideImagesToStorage(personGuideUrl: String, backgroundGuideUrl: String) {
+        withContext(Dispatchers.IO) {
+            val folderName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val folder = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "$folderRootPath/$folderName")
+            if (!folder.exists()) {
+                folder.mkdirs()
+            }
 
-        // 추가 이미지 데이터 저장
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "personGuideImage.png"))
-        saveImageAsync(loadBitmapFromPath(imagePath), File(folder, "backgroundGuideImage.png"))
+            val originalFile = File(folder, "originalImage.png")
+            saveImageAsync(loadBitmapFromPath(imagePath), originalFile)
+
+            val personGuideBitmap = loadImageFromUrl(personGuideUrl)
+            val personGuideFile = File(folder, "personGuideImage.png")
+            saveImageAsync(personGuideBitmap, personGuideFile)
+
+            val backgroundGuideBitmap = loadImageFromUrl(backgroundGuideUrl)
+            val backgroundGuideFile = File(folder, "backgroundGuideImage.png")
+            saveImageAsync(backgroundGuideBitmap, backgroundGuideFile)
+        }
     }
 
     private fun loadBitmapFromPath(path: String): Bitmap {
         return BitmapFactory.decodeFile(path)
     }
+
+    private fun loadImageFromUrl(url: String): Bitmap {
+        val connection = java.net.URL(url).openConnection()
+        connection.connect()
+        return BitmapFactory.decodeStream(connection.getInputStream())
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
 
     private suspend fun saveImageAsync(bitmap: Bitmap?, file: File) {
         withContext(Dispatchers.IO) {

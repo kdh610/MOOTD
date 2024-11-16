@@ -65,11 +65,6 @@
             app:destination="@id/mainFragment" />
     </fragment>
     <fragment
-        android:id="@+id/createGuideFragment"
-        android:name="com.example.mootd.fragment.CreateGuideFragment"
-        android:label="fragment_create_guide"
-        tools:layout="@layout/fragment_create_guide" />
-    <fragment
         android:id="@+id/guideListFragment"
         android:name="com.example.mootd.fragment.GuideListFragment"
         android:label="fragment_guide_list"
