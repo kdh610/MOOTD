@@ -5,6 +5,8 @@ import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -22,6 +24,7 @@ public class Photo {
     @Field("device_id")
     private String deviceId;//기계 아이디
 
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE) // 2dsphere 인덱스 설정
     private GeoJsonPoint coordinates; // GeoJSON 포인트 타입 사용
 
     private List<String> tag = new ArrayList<>();//이미지 분석 후 생성되는 태그
