@@ -223,6 +223,8 @@ public class PhotoService {
                 .map(photo -> new MapResponseDTO(
                         photo.getId(),
                         photo.getMaskImageUrl(),
+                        photo.getPersonGuidelineUrl(),
+                        photo.getBackgroundGuidelineUrl(),
                         photo.getCoordinates().getY(),  // latitude
                         photo.getCoordinates().getX()   // longitude
                 ));
@@ -255,8 +257,8 @@ public class PhotoService {
                                     photoUsageHistory.addPhotoUsage(
                                             photo.getId(),
                                             LocalDateTime.now(),
-                                            photo.getOriginImageUrl(),
-                                            photo.getGuideImageUrl(),
+                                            photo.getPersonGuidelineUrl(),
+                                            photo.getBackgroundGuidelineUrl(),
                                             photo.getMaskImageUrl()
                                     );
                                 }
@@ -329,7 +331,8 @@ public class PhotoService {
         return photoRepository.findById(photoId)
                 .map(photo -> new PhotoDetailDTO(photo.getId(),
                         photo.getMaskImageUrl(),
-                        null,
+                        photo.getPersonGuidelineUrl(),
+                        photo.getBackgroundGuidelineUrl(),
                         photo.getCoordinates().getY(),
                         photo.getCoordinates().getX())
                 );
