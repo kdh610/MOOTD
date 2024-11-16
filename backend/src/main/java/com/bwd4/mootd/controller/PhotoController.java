@@ -4,11 +4,10 @@ import com.bwd4.mootd.common.response.ApiResponse;
 import com.bwd4.mootd.domain.PhotoUsage;
 import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
+import com.bwd4.mootd.dto.response.GuideLineResponseDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
-import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
-import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import com.bwd4.mootd.infra.kafka.ProducerService;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -61,9 +61,9 @@ public class PhotoController {
 
     @Operation(summary = "최근 사용 사진 \"등록\" API", description = "사용여부를 이 api로 등록을 해야만, 최근에 사용한 목록조회 api에서 확인이 가능합니다.")
     @PostMapping("/usage")
-    public Mono<ResponseEntity<ApiResponse<?>>> photoUsage(@RequestBody PhotoUsageRequestDTO request){
+    public Mono<ResponseEntity<ApiResponse<?>>> photoUsage(@RequestBody PhotoUsageRequestDTO request) {
         return photoService.recordPhotoUsage(request).
-                then(Mono.just(ResponseEntity.ok(ApiResponse.success("성공",null))));
+                then(Mono.just(ResponseEntity.ok(ApiResponse.success("성공", null))));
     }
 
     @Operation(summary = "최근 사용 사진을 \"조회\" 하는 API", description = "최근 사용한 이미지들을 조회합니다. 정렬 순서는 최신순(사용일 기준 내림차순)입니다.")
@@ -77,13 +77,13 @@ public class PhotoController {
 
     /** MongoDB
      * 태그를 검색하면 태그가 포함된 사진데이터를 응답하는 controller
+     *
      * @param tag
      * @returngin
      */
     @GetMapping("/mongo/tag")
     public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
         log.info("tag: {}", tag);
-
         return photoService.findMongoByTag(tag)
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
@@ -131,16 +131,20 @@ public class PhotoController {
                 .collectList()
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
-    
-    
 
     @Operation(summary = "사진을 단일로 조회하는 API", description = "photoId를 사용해서 이미지를 단일 조회하는 API")
     @GetMapping("/{photoId}")
-    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(@Parameter(description = "조회할 photoId") @PathVariable("photoId") String photoId) {
+    public Mono<ResponseEntity<ApiResponse<PhotoDetailDTO>>> getPhotoDetail(
+            @Parameter(description = "조회할 photoId") @PathVariable("photoId") String photoId) {
         return photoService.findPhotoDetail(photoId)
                 .map(photoDetail -> ResponseEntity.ok(ApiResponse.success("photo 단일 조회 성공", photoDetail)));
     }
 
-
-
+    @Operation(summary = "가이드라인 생성 api")
+    @PostMapping(value = "/guide", consumes = "multipart/form-data")
+    public Mono<ResponseEntity<ApiResponse<GuideLineResponseDTO>>> makeGuideLine(
+            @RequestPart @Parameter(description = "가이드라인을 생성할 파일") MultipartFile originImageFile) {
+        return photoService.makeGuideLine(originImageFile)
+                .map(response -> ResponseEntity.ok(ApiResponse.success("가이드라인 생성 성공", response)));
+    }
 }
