@@ -20,6 +20,6 @@ interface PictureUploadService {
         @Part originImageFile: MultipartBody.Part,
         @Part("deviceId") deviceId: RequestBody,
         @Part("latitude") latitude: RequestBody,
-    @Part("longitude") longitude: RequestBody
+        @Part("longitude") longitude: RequestBody
     ): Call<PictureUploadResponse<String>>
 }

@@ -10,10 +10,12 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
             Glide.with(binding.root).load(it).into(binding.overlayOriginalGuide)
             binding.overlayOriginalGuide.visibility = View.VISIBLE
         }
+
         personGuideImageUrl?.let {
             Glide.with(binding.root).load(it).into(binding.overlayPersonGuide)
             binding.overlayPersonGuide.visibility = View.VISIBLE
         }
+
         backgroundGuideImageUrl?.let {
             Glide.with(binding.root).load(it).into(binding.overlayBackgroundGuide)
             binding.overlayBackgroundGuide.visibility = View.VISIBLE
@@ -22,6 +24,8 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
 
     fun setOverlayButtons() {
         binding.btnOriginalGuide.isSelected = true
+        binding.btnPersonGuide.isSelected = false
+        binding.btnBackgroundGuide.isSelected = false
         binding.btnOriginalGuide.visibility = View.VISIBLE
         binding.btnPersonGuide.visibility = View.VISIBLE
         binding.btnBackgroundGuide.visibility = View.VISIBLE
@@ -32,6 +36,9 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
         binding.overlayPersonGuide.visibility = View.GONE
         binding.overlayBackgroundGuide.visibility = View.GONE
 
+        binding.btnOriginalGuide.isSelected = false
+        binding.btnPersonGuide.isSelected = false
+        binding.btnBackgroundGuide.isSelected = false
         binding.btnOriginalGuide.visibility = View.GONE
         binding.btnPersonGuide.visibility = View.GONE
         binding.btnBackgroundGuide.visibility = View.GONE

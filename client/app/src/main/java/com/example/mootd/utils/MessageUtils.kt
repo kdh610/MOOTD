@@ -10,8 +10,8 @@ object MessageUtils {
         retryButton.visibility = View.VISIBLE
     }
 
-    fun showNullErrorMessage(messageView: TextView) {
-        messageView.text = "사용한 가이드라인이 없습니다."
+    fun showNullErrorMessage(messageView: TextView, text: String) {
+        messageView.text = text
         messageView.visibility = View.VISIBLE
     }
 
