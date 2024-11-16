@@ -25,8 +25,8 @@ public class PhotoUsageHistory {
     }
 
     public void addPhotoUsage(String photoId, LocalDateTime lastUsedAt,
-                              String originImageUrl, String guideImageUrl, String maskImageUrl) {
-        this.photoUsageList.add(new PhotoUsage(photoId, lastUsedAt, originImageUrl, guideImageUrl, maskImageUrl));
+                              String personGuidelineUrl, String backgroudGuidelineUrl, String maskImageUrl) {
+        this.photoUsageList.add(new PhotoUsage(photoId, lastUsedAt, personGuidelineUrl, backgroudGuidelineUrl, maskImageUrl));
 
         // 항목 추가 후 즉시 내림차순 정렬
 //        this.photoUsageList.sort(Comparator.comparing(PhotoUsage::getLastUsedAt).reversed());

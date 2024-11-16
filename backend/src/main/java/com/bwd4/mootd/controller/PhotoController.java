@@ -6,10 +6,8 @@ import com.bwd4.mootd.dto.request.PhotoUploadRequestDTO;
 import com.bwd4.mootd.dto.request.PhotoUsageRequestDTO;
 import com.bwd4.mootd.dto.response.GuideLineResponseDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
-import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
-import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import com.bwd4.mootd.infra.kafka.ProducerService;
 import com.bwd4.mootd.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,7 +141,7 @@ public class PhotoController {
     }
 
     @Operation(summary = "가이드라인 생성 api")
-    @PostMapping(value = "/guild", consumes = "multipart/form-data")
+    @PostMapping(value = "/guide", consumes = "multipart/form-data")
     public Mono<ResponseEntity<ApiResponse<GuideLineResponseDTO>>> makeGuideLine(
             @RequestPart @Parameter(description = "가이드라인을 생성할 파일") MultipartFile originImageFile) {
         return photoService.makeGuideLine(originImageFile)

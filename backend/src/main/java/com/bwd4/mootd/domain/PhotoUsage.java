@@ -8,15 +8,15 @@ import java.time.LocalDateTime;
 public class PhotoUsage {
     private String photoId;
     private LocalDateTime lastUsedAt;
-    private String originImageUrl;
-    private String guideImageUrl;
+    private String personGuidelineUrl;
+    private String backgroundGuidelineUrl;
     private String maskImageUrl;
 
-    public PhotoUsage(String photoId, LocalDateTime lastUsedAt, String originImageUrl, String guideImageUrl, String maskImageUrl) {
+    public PhotoUsage(String photoId, LocalDateTime lastUsedAt, String personGuidelineUrl, String backgroundGuidelineUrl, String maskImageUrl) {
         this.photoId = photoId;
         this.lastUsedAt = lastUsedAt;
-        this.originImageUrl = originImageUrl;
-        this.guideImageUrl = guideImageUrl;
+        this.personGuidelineUrl = personGuidelineUrl;
+        this.backgroundGuidelineUrl = backgroundGuidelineUrl;
         this.maskImageUrl = maskImageUrl;
     }
 
