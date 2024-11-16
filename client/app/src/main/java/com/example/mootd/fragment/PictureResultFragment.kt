@@ -56,6 +56,8 @@ class PictureResultFragment : Fragment() {
     private var longitude: Double? = null
 
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -68,6 +70,7 @@ class PictureResultFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         photoFilePath = arguments?.getString("photoFilePath") ?: ""
+        Log.d("check console okhttp", "this is image ${photoFilePath}")
         val isFrontCamera = arguments?.getBoolean("isFrontCamera") ?: false
         val deviceId = getDeviceId(requireContext())
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())

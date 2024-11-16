@@ -5,7 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface GuideSearchService {
-    @GET("/api/v1/photos/tag")
+    @GET("/api/v1/photos/es/tag")
     fun searchPhotosByTag(
         @Query("tag") tag: String
     ): Call<SearchResponse>

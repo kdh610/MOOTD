@@ -12,8 +12,9 @@ data class GuideDetailResponse(
 
 data class GuideData(
     val photoId: String,
-    val guideImageUrl: String?,
-    val maskImageUrl: String?,
+    val maskImageUrl: String,
+    val personGuidelineUrl: String,
+    val backgroundGuidelineUrl: String,
     val latitude: Double,
     val longitude: Double
 

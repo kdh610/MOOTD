@@ -36,6 +36,8 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -51,6 +53,7 @@ import com.example.mootd.databinding.FragmentMainBinding
 import com.example.mootd.manager.CameraManager
 import com.example.mootd.manager.GuideOverlayManager
 import com.example.mootd.manager.GuideRecyclerManager
+import com.example.mootd.viewmodel.GuideOverlayViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,19 +86,14 @@ class MainFragment : Fragment(), SensorEventListener {
 
 
     private lateinit var cameraExecutor: ExecutorService
+    private var isFrontCamera = false
 
-
-    private var originalImageUrl: String? = null
-    private var personGuideImageUrl: String? = null
-    private var backgroundGuideImageUrl: String? = null
-
-    private var isOriginalGuideVisible = true
-    private var isPersonGuideVisible = false
-    private var isBackgroundGuideVisible = false
 
     private lateinit var cameraManager: CameraManager
     private lateinit var guideOverlayManager: GuideOverlayManager
     private lateinit var guideRecyclerManager: GuideRecyclerManager
+
+    private val guideOverlayViewModel: GuideOverlayViewModel by activityViewModels()
 
 
     override fun onCreateView(
@@ -116,11 +114,12 @@ class MainFragment : Fragment(), SensorEventListener {
         }
 
         cameraManager = CameraManager(this, binding)
+        cameraManager.setCameraSelector(isFrontCamera)
         guideOverlayManager = GuideOverlayManager(binding)
-        guideRecyclerManager = GuideRecyclerManager(requireContext(), binding, guideOverlayManager) { originalUrl, personUrl, backgroundUrl ->
-            originalImageUrl = originalUrl
-            personGuideImageUrl = personUrl
-            backgroundGuideImageUrl = backgroundUrl
+        guideRecyclerManager = GuideRecyclerManager(requireContext(), binding, guideOverlayManager, guideOverlayViewModel) { originalUrl, personUrl, backgroundUrl ->
+            guideOverlayManager.setOverlayButtons()
+            guideOverlayViewModel.setGuideImages(originalUrl, personUrl, backgroundUrl)
+            updateOverlayImages()
         }
 
         if (allPermissionsGranted()) {
@@ -137,6 +136,20 @@ class MainFragment : Fragment(), SensorEventListener {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        guideOverlayViewModel.showOriginal.observe(viewLifecycleOwner) { showOriginal ->
+            updateOverlayImages()
+            binding.btnOriginalGuide.isSelected = showOriginal
+        }
+
+        guideOverlayViewModel.showPerson.observe(viewLifecycleOwner) { showPerson ->
+            updateOverlayImages()
+            binding.btnPersonGuide.isSelected = showPerson
+        }
+
+        guideOverlayViewModel.showBackground.observe(viewLifecycleOwner) { showBackground ->
+            updateOverlayImages()
+            binding.btnBackgroundGuide.isSelected = showBackground
+        }
 
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
@@ -151,9 +164,6 @@ class MainFragment : Fragment(), SensorEventListener {
             btnMore.setOnClickListener { navigateTo(R.id.action_mainFragment_to_guideListFragment) }
             btnCloseHorizontalLayout.setOnClickListener { toggleHorizontalLayoutVisibility(isVisible = false) }
         }
-//        rotationSensor?.also {
-//            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-//        }
     }
 
     private fun navigateTo(actionId: Int) {
@@ -168,13 +178,19 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private fun setupUI() {
         binding.btnCapture.setOnClickListener {
-            cameraManager.takePhoto { photoPath ->
-                val bundle = Bundle().apply { putString("photoFilePath", photoPath) }
+            cameraManager.takePhoto { photoPath, isFront ->
+                isFrontCamera = isFront
+                val bundle = Bundle().apply {
+                    putString("photoFilePath", photoPath)
+                    putBoolean("isFrontCamera", isFront)
+                }
+
                 findNavController().navigate(R.id.action_mainFragment_to_pictureResultFragment, bundle)
             }
         }
 
         binding.btnSwitchCamera.setOnClickListener {
+            isFrontCamera = !isFrontCamera
             cameraManager.toggleCamera()
         }
 
@@ -191,50 +207,50 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private fun setupGuideButtons() {
         binding.btnOriginalGuide.setOnClickListener {
-            isOriginalGuideVisible = !isOriginalGuideVisible
-            binding.btnOriginalGuide.isSelected = isOriginalGuideVisible
-            updateOverlayImages()
+            guideOverlayViewModel.toggleShowOriginal()
         }
 
         binding.btnPersonGuide.setOnClickListener {
-            isPersonGuideVisible = !isPersonGuideVisible
-            binding.btnPersonGuide.isSelected = isPersonGuideVisible
-            updateOverlayImages()
+            guideOverlayViewModel.toggleShowPerson()
         }
 
         binding.btnBackgroundGuide.setOnClickListener {
-            isBackgroundGuideVisible = !isBackgroundGuideVisible
-            binding.btnBackgroundGuide.isSelected = isBackgroundGuideVisible
-            updateOverlayImages()
+            guideOverlayViewModel.toggleShowBackground()
         }
     }
 
     private fun updateOverlayImages() {
         guideOverlayManager.updateOverlayImages(
-            originalImageUrl = originalImageUrl,
-            personGuideImageUrl = personGuideImageUrl,
-            backgroundGuideImageUrl = backgroundGuideImageUrl,
-            showOriginal = isOriginalGuideVisible,
-            showPerson = isPersonGuideVisible,
-            showBackground = isBackgroundGuideVisible
+            guideOverlayViewModel.originalImageUrl.value,
+            guideOverlayViewModel.personGuideImageUrl.value,
+            guideOverlayViewModel.backgroundGuideImageUrl.value,
+            guideOverlayViewModel.showOriginal.value ?: true,
+            guideOverlayViewModel.showPerson.value ?: false,
+            guideOverlayViewModel.showBackground.value ?: false
         )
     }
 
     private fun loadGuideImages() {
-        val hasGuide = arguments?.getBoolean("hasGuide") ?: false
-        if (hasGuide) {
+        if (guideOverlayViewModel.originalImageUrl.value != null) {
             guideOverlayManager.setOverlayButtons()
-            val isLocal = arguments?.getBoolean("isLocal") ?: false
-            if (isLocal) {
-                originalImageUrl = arguments?.getString("originalImagePath")
-                personGuideImageUrl = arguments?.getString("personGuideImagePath")
-                backgroundGuideImageUrl = arguments?.getString("backgroundGuideImagePath")
-            } else {
-                val photoId = arguments?.getString("photoId")
-                photoId?.let { fetchGuideData(it) }
-            }
             updateOverlayImages()
-        } else {
+        }
+//        else if (hasGuide) {
+//            guideOverlayManager.setOverlayButtons()
+//            val isLocal = arguments?.getBoolean("isLocal") ?: false
+//            if (isLocal) {
+//                guideOverlayViewModel.setGuideImages(
+//                    arguments?.getString("originalImagePath"),
+//                    arguments?.getString("personGuideImagePath"),
+//                    arguments?.getString("backgroundGuideImagePath")
+//                )
+//            } else {
+//                val photoId = arguments?.getString("photoId")
+//                photoId?.let { fetchGuideData(it) }
+//            }
+//            updateOverlayImages()
+//        }
+        else {
             guideOverlayManager.clearOverlay()
         }
     }
@@ -245,10 +261,7 @@ class MainFragment : Fragment(), SensorEventListener {
             override fun onResponse(call: Call<GuideDetailResponse>, response: Response<GuideDetailResponse>) {
                 if (response.isSuccessful) {
                     response.body()?.data?.let {
-                        originalImageUrl = it.maskImageUrl
-                        personGuideImageUrl = it.guideImageUrl
-                        backgroundGuideImageUrl = it.guideImageUrl
-                        guideOverlayManager.setOverlay(originalImageUrl, personGuideImageUrl, backgroundGuideImageUrl)
+                        guideOverlayViewModel.setGuideImages(it.maskImageUrl, it.personGuidelineUrl, it.backgroundGuidelineUrl)
                     }
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}")
@@ -298,7 +311,7 @@ class MainFragment : Fragment(), SensorEventListener {
             val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat() // Pitch (x-axis)
             val roll = Math.toDegrees(orientation[2].toDouble()).toFloat() // Roll (y-axis)
 
-            Log.d("SensorData", "Pitch: $pitch, Roll: $roll")
+//            Log.d("SensorData", "Pitch: $pitch, Roll: $roll")
 
             // 카메라 위치 조정
             adjustCameraPosition(pitch, roll)

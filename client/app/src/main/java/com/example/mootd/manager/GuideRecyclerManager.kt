@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mootd.R
 import com.example.mootd.adapter.GuideAdapter
+import com.example.mootd.adapter.UnifiedPhotoData
 import com.example.mootd.api.PhotoData
 import com.example.mootd.api.RecentUsageResponse
 import com.example.mootd.api.RetrofitInstance
@@ -14,6 +15,7 @@ import com.example.mootd.api.UsageRequest
 import com.example.mootd.databinding.FragmentMainBinding
 import com.example.mootd.utils.DeviceUtils
 import com.example.mootd.utils.MessageUtils
+import com.example.mootd.viewmodel.GuideOverlayViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -22,6 +24,7 @@ class GuideRecyclerManager(
     private val context: Context,
     private val binding: FragmentMainBinding,
     private val guideOverlayManager: GuideOverlayManager,
+    private val guideOverlayViewModel: GuideOverlayViewModel,
     private val onPhotoSelected: (originalImageUrl: String?, personGuideImageUrl: String?, backgroundGuideImageUrl: String?) -> Unit
 )  {
     private var guideAdapter: GuideAdapter? = null
@@ -31,23 +34,29 @@ class GuideRecyclerManager(
         binding.horizontalRecyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         binding.horizontalRecyclerView.setHasFixedSize(true)
 
-        guideAdapter = GuideAdapter(photoList.map { it.photoId to it.originImageUrl }, R.layout.item_guide_image) { photoId ->
-            if (currentSelectedPhotoId == photoId) {
+        val unifiedPhotoList = photoList.map { photoData ->
+            UnifiedPhotoData(
+                photoId = photoData.photoId,
+                originalImageUrl = photoData.maskImageUrl,
+                personGuidelineUrl = photoData.personGuidelineUrl,
+                backgroundGuidelineUrl = photoData.backgroundGuidelineUrl
+            )
+        }
+
+
+        guideAdapter = GuideAdapter(unifiedPhotoList, R.layout.item_guide_image) { photoData ->
+            if (currentSelectedPhotoId == photoData.photoId) {
                 clearOverlayImages()
+                guideOverlayViewModel.clearGuideImages()
                 currentSelectedPhotoId = null
             } else {
-                currentSelectedPhotoId = photoId
-                val selectedPhoto = photoList.find { it.photoId == photoId }
-
-                selectedPhoto?.let {
-                    val originalImageUrl = it.originImageUrl
-                    val personGuideImageUrl = it.guideImageUrl
-                    val backgroundGuideImageUrl = it.maskImageUrl
-                    onPhotoSelected(originalImageUrl, personGuideImageUrl, backgroundGuideImageUrl)
-                    guideOverlayManager.setOverlay(originalImageUrl, personGuideImageUrl, backgroundGuideImageUrl)
-                    guideOverlayManager.setOverlayButtons()
-                }
-                postUsageData(photoId!!)
+                currentSelectedPhotoId = photoData.photoId
+                onPhotoSelected(
+                    photoData.originalImageUrl,
+                    photoData.personGuidelineUrl,
+                    photoData.backgroundGuidelineUrl
+                )
+                postUsageData(photoData.photoId ?: "")
             }
         }
         binding.horizontalRecyclerView.adapter = guideAdapter
@@ -69,14 +78,14 @@ class GuideRecyclerManager(
                 if (response.isSuccessful) {
                     val photoList = response.body()?.data ?: emptyList()
                     if (photoList.isEmpty()) {
-                        MessageUtils.showNullErrorMessage(binding.tvErrorMessage)
+                        MessageUtils.showNullErrorMessage(binding.tvErrorMessage, "사용한 가이드라인이 없습니다.")
                     } else {
                         binding.tvErrorMessage.visibility = View.GONE
                         setupRecyclerView(photoList)
                     }
                 } else if (response.code() == 404) {
                     // 404 에러일 때 처리
-                    MessageUtils.showNullErrorMessage(binding.tvErrorMessage)
+                    MessageUtils.showNullErrorMessage(binding.tvErrorMessage, "사용한 가이드라인이 없습니다.")
                 } else {
                     Log.e("API ERROR", "Response code: ${response.code()}, message: ${response.message()}")
                     MessageUtils.showNetworkErrorMessage(binding.tvErrorMessage, binding.btnRetry)

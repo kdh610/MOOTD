@@ -22,7 +22,7 @@ data class RecentUsageResponse(
 data class PhotoData(
     val photoId: String,
     val lastUsedAt: String,
-    val originImageUrl: String,
-    val guideImageUrl: String,
-    val maskImageUrl: String
+    val maskImageUrl: String,
+    val personGuidelineUrl: String?,
+    val backgroundGuidelineUrl: String?
 )

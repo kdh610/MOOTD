@@ -9,10 +9,18 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.mootd.R
 
+
+data class UnifiedPhotoData(
+    val photoId: String?,
+    val originalImageUrl: String,
+    val personGuidelineUrl: String?,
+    val backgroundGuidelineUrl: String?
+)
+
 class GuideAdapter(
-    private var imageList: List<Pair<String?, String>>, // Pair<photoId, originImageUrl>
+    private var photoList: List<UnifiedPhotoData>, // UnifiedPhotoData 리스트
     private val layoutId: Int,
-    private val onItemClick: (String?) -> Unit
+    private val onItemClick: (UnifiedPhotoData) -> Unit
 ) : RecyclerView.Adapter<GuideAdapter.GuideViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GuideViewHolder {
@@ -22,11 +30,13 @@ class GuideAdapter(
 
 
     override fun onBindViewHolder(holder: GuideViewHolder, position: Int) {
-        val (photoId, originImageUrl) = imageList[position]
+        val photoData = photoList[position]
+
         Glide.with(holder.itemView.context)
-            .load(originImageUrl)
+            .load(photoData.originalImageUrl) // 썸네일 URL
             .centerCrop()
             .into(holder.imageView)
+
 
         holder.imageView.post {
             val width = holder.imageView.width
@@ -38,16 +48,16 @@ class GuideAdapter(
         }
 
         holder.itemView.setOnClickListener {
-            onItemClick(photoId ?: originImageUrl) // photoId가 없으면 originImageUrl 전달
+            onItemClick(photoData) // photoId가 없으면 originImageUrl 전달
         }
     }
 
-    fun updateData(newImageList: List<Pair<String?, String>>) {
-        imageList = newImageList
+    override fun getItemCount(): Int = photoList.size
+
+    fun updateData(newPhotoList: List<UnifiedPhotoData>) {
+        photoList = newPhotoList
         notifyDataSetChanged()
     }
-
-    override fun getItemCount(): Int = imageList.size
 
     inner class GuideViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
