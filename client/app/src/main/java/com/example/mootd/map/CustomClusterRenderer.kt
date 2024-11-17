@@ -56,7 +56,7 @@ class CustomClusterRenderer(
                     putString("photoId", photoId)
                     putString("imageUrl", imageUrl)
                 }
-                fragment.findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
+//                fragment.findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
             }
         }
     }

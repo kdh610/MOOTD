@@ -19,5 +19,5 @@ data class PhotoClusterItem(
     override fun getSnippet(): String = snippet
     override fun getZIndex(): Float = Float.NaN
     fun getOriginalImageUrl(): String = originalImageUrl
-    fun getImageId(): String? = photoId
+    fun getImageId(): String = photoId
 }
