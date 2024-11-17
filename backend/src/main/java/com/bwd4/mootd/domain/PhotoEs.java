@@ -35,19 +35,16 @@ public class PhotoEs {
 
     private String name;
 
-    @Field(type =FieldType.Text)
+    @Field(type =FieldType.Text, name="origin_image_url")
     private String originImageUrl;
 
-    @Field(type =FieldType.Text)
-    private String guideImageUrl;
-
-    @Field(type =FieldType.Text)
+    @Field(type =FieldType.Text, name = "mask_image_url")
     private String maskImageUrl;
 
-    @Field(type =FieldType.Text)
+    @Field(type =FieldType.Text, name="person_guideline_url")
     private String personGuidelineUrl;
 
-    @Field(type =FieldType.Text)
+    @Field(type =FieldType.Text, name = "background_guideline_url")
     private String backgroundGuidelineUrl;
 
     private Boolean flag;
@@ -58,6 +55,7 @@ public class PhotoEs {
         return TagSearchResponseDTO.builder()
                 .id(this.id)
                 .tag(this.tag)
+                .originImageUrl(this.originImageUrl)
                 .maskImageUrl(this.maskImageUrl)
                 .personGuidelineUrl(this.personGuidelineUrl)
                 .backgroundGuidelineUrl(this.backgroundGuidelineUrl)

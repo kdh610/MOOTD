@@ -15,7 +15,6 @@ public class TagSearchResponseDTO {
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
     private List<String> tag;
     private String originImageUrl;
-    private String guideImageUrl;
     private String maskImageUrl;
     private String personGuidelineUrl;
     private String backgroundGuidelineUrl;
