@@ -77,7 +77,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         clusterManager = ClusterManager(requireContext(), mMap)
 
         val customClusterRenderer = CustomClusterRenderer(this, requireContext(), mMap, clusterManager)
-
         clusterManager.renderer = customClusterRenderer
 
         // 확대/축소 및 카메라 이동 시 클러스터를 다시 렌더링
@@ -93,6 +92,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             true
         }
 
+        clusterManager.setOnClusterItemClickListener { clusterItem ->
+            // 개별 아이템 클릭 시 상세화면으로 이동
+            val photoId = clusterItem.getImageId()
+            val imageUrl = clusterItem.getOriginalImageUrl()
+
+
+            Log.d("ClusterItemClick", "Photo ID: $photoId")
+            Log.d("ClusterItemClick", "Image URL: $imageUrl")
+
+            openDetailFragment(photoId, imageUrl)
+            true
+        }
 
         enableMyLocation()
     }
@@ -113,10 +124,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         findNavController().navigate(R.id.mapClusterGalleryFragment, bundle)
     }
 
-    private fun openDetailFragment(photoId: String, imageUrl: String) {
+    private fun openDetailFragment(photoId: String, originalImageUrl: String) {
+        Log.d("openDetailFragment", "photoId: $photoId, imageUrl: $originalImageUrl")
         val bundle = Bundle().apply {
             putString("photoId", photoId)
-            putString("imageUrl", imageUrl)
+            putString("originalImageUrl", originalImageUrl)
         }
 
         // GuideDetailFragment로 이동
@@ -179,6 +191,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                     clusterManager.addItem(clusterItem)
 
+
                 }
 
                 // Glide가 이미지 로드를 중단할 때 호출되는 메서드
@@ -196,7 +209,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     Log.d("ImageURL", "Attempting to load image from URL: ${photo.maskImageUrl}")
 
                 }
+
             })
+
     }
 
     private fun createBubbleBitmap(originalBitmap: Bitmap): Bitmap {
