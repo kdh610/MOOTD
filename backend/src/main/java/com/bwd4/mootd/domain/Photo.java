@@ -118,8 +118,9 @@ public class Photo {
                 .id(this.id)
                 .tag(this.tag)
                 .originImageUrl(this.originImageUrl)
-                .guideImageUrl(this.guideImageUrl)
                 .maskImageUrl(this.maskImageUrl)
+                .personGuidelineUrl(this.personGuidelineUrl)
+                .backgroundGuidelineUrl(this.backgroundGuidelineUrl)
                 .build();
     }
 
