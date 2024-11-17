@@ -54,7 +54,14 @@
         android:id="@+id/mapFragment"
         android:name="com.example.mootd.fragment.MapFragment"
         android:label="fragment_map"
-        tools:layout="@layout/fragment_map" />
+        tools:layout="@layout/fragment_map" >
+        <action
+            android:id="@+id/action_mapFragment_to_guideDetailFragment"
+            app:destination="@id/guideDetailFragment" />
+        <action
+            android:id="@+id/action_mapFragment_to_mapClusterGalleryFragment"
+            app:destination="@id/mapClusterGalleryFragment" />
+    </fragment>
     <fragment
         android:id="@+id/pictureDetailFragment"
         android:name="com.example.mootd.fragment.PictureDetailFragment"
@@ -95,5 +102,21 @@
         <action
             android:id="@+id/action_guideDetailFragment_to_mainFragment"
             app:destination="@id/mainFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mapClusterGalleryFragment"
+        android:name="com.example.mootd.fragment.MapClusterGalleryFragment"
+        android:label="Map Cluster Gallery"
+        tools:layout="@layout/fragment_map_cluster_gallery_view">
+        <argument
+            android:name="photoUrlsWithId"
+            app:argType="java.util.ArrayList" />
+        <argument
+            android:name="photoUrlsWithoutId"
+            app:argType="java.util.ArrayList" />
+        <action
+            android:id="@+id/action_mapClusterGalleryFragment_to_guideDetailFragment"
+            app:destination="@id/guideDetailFragment" />
     </fragment>
 </navigation>

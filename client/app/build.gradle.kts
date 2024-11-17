@@ -109,6 +109,7 @@ dependencies {
     // OkHttp Logging Interceptor (로그 출력용)
     implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
+    implementation ("androidx.recyclerview:recyclerview:1.2.1")
 
 
 }

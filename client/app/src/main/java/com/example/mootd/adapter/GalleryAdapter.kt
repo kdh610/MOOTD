@@ -37,7 +37,8 @@ class GalleryAdapter : RecyclerView.Adapter<GalleryAdapter.GalleryViewHolder> {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GalleryViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_gallery_image, parent, false)
+        val view =
+            LayoutInflater.from(parent.context).inflate(R.layout.item_gallery_image, parent, false)
         return GalleryViewHolder(view)
     }
 

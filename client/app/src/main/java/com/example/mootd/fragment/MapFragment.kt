@@ -16,9 +16,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.mootd.R
 import com.example.mootd.api.MapService
@@ -37,7 +39,6 @@ import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions
 import com.example.mootd.api.ResponseData
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.map.CustomClusterRenderer
-import com.example.mootd.map.GalleryViewActivity
 import com.google.maps.android.clustering.Cluster
 import retrofit2.Call
 import retrofit2.Callback
@@ -52,7 +53,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var clusterManager: ClusterManager<PhotoClusterItem>
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -60,11 +60,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val view = inflater.inflate(R.layout.fragment_map, container, false)
 
-
-        // 지도 초기화
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
 
         // FusedLocationProviderClient 초기화
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
@@ -76,19 +73,55 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mMap = googleMap
 
         // 클러스터 매니저 초기화
+
         clusterManager = ClusterManager(requireContext(), mMap)
-        clusterManager.renderer = CustomClusterRenderer(requireContext(), mMap, clusterManager)
 
+        val customClusterRenderer = CustomClusterRenderer(this, requireContext(), mMap, clusterManager)
 
-        mMap.setOnCameraIdleListener(clusterManager)
+        clusterManager.renderer = customClusterRenderer
+
+        // 확대/축소 및 카메라 이동 시 클러스터를 다시 렌더링
+        mMap.setOnCameraIdleListener {
+            clusterManager.cluster() // 클러스터 다시 계산
+        }
+
         mMap.setOnMarkerClickListener(clusterManager)
 
-        clusterManager.setOnClusterItemClickListener { item ->
-            openGalleryView(item)
+
+        clusterManager.setOnClusterClickListener { cluster ->
+            openGalleryViewForCluster(cluster)
             true
         }
 
+
         enableMyLocation()
+    }
+
+    private fun openGalleryViewForCluster(cluster: Cluster<PhotoClusterItem>) {
+        val photoUrlsWithId = cluster.items
+            .filter { it.getImageId() != null }
+            .map { Pair(it.getImageId(), it.getImageUrl()) }
+
+        val photoUrlsWithoutId = cluster.items
+            .filter { it.getImageId() == null }
+            .map { it.getImageUrl() }
+
+        val bundle = Bundle().apply {
+            putSerializable("photoUrlsWithId", ArrayList(photoUrlsWithId))
+            putStringArrayList("photoUrlsWithoutId", ArrayList(photoUrlsWithoutId))
+        }
+
+        findNavController().navigate(R.id.mapClusterGalleryFragment, bundle)
+    }
+
+    private fun openDetailFragment(photoId: String, imageUrl: String) {
+        val bundle = Bundle().apply {
+            putString("photoId", photoId)
+            putString("imageUrl", imageUrl)
+        }
+
+        // GuideDetailFragment로 이동
+        findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
     }
 
 
@@ -97,8 +130,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             override fun onResponse(call: Call<ResponseData>, response: Response<ResponseData>) {
                 if (response.isSuccessful) {
                     response.body()?.let { responseData ->
+
                         if (responseData.status == 200) {
                             for (photo in responseData.data) {
+                                Log.d("MapFragment", "Adding marker with URL: ${photo.maskImageUrl}")
                                 addCustomMarker(photo)
                             }
                         } else {
@@ -124,6 +159,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             .asBitmap()
             .load(photo.maskImageUrl)
             .override(200, 200)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
 
@@ -131,32 +168,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                     val clusterItem = PhotoClusterItem(
                         position,
-                        "Photo ID: ${photo.photoId}!!",
+                        "Photo ID: ${photo.photoId}",
                         "Latitude: ${photo.latitude}, Longitude: ${photo.longitude}",
                         photo.maskImageUrl,
+                        photo.photoId,
                         markerBitmap
                     )
-
+                    Log.d("CustomMarker", "maskImageUrl: ${photo.maskImageUrl}")
 
                     clusterManager.addItem(clusterItem)
-                    clusterManager.cluster()
 
-                    mMap.addMarker(
-
-                        MarkerOptions()
-                            .position(position)
-                            .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
-
-                    )
                 }
 
                 // Glide가 이미지 로드를 중단할 때 호출되는 메서드
                 override fun onLoadCleared(placeholder: Drawable?) {
                     Log.d("CustomMarker", "Glide onLoadCleared called for photo ID: ${photo.photoId}")
-
+                    if (placeholder == null) {
+                        Log.d("CustomMarker", "No placeholder image loaded")
+                    } else {
+                        Log.d("CustomMarker", "Placeholder image loaded")
+                    }
                 }
+
                 override fun onLoadFailed(errorDrawable: Drawable?) {
                     Log.e("CustomMarker", "Failed to load image for photo ID: ${photo.photoId}")
+                    Log.d("ImageURL", "Attempting to load image from URL: ${photo.maskImageUrl}")
+
                 }
             })
     }
@@ -226,7 +263,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     mMap.addMarker(MarkerOptions().position(currentLatLng))
 
                     Log.d("Location", "Fetching photos for location: Latitude = ${location.latitude}, Longitude = ${location.longitude}")
-                    fetchPhotos(location.latitude, location.longitude, 10)
+                    fetchPhotos(location.latitude, location.longitude, 100)
                 } else {
                     Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
                 }
@@ -236,16 +273,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Toast.makeText(requireContext(), "Location access error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun openGalleryView(item: PhotoClusterItem) {
-        val intent = Intent(requireContext(), GalleryViewActivity::class.java)
-        intent.putExtra("photoUrl", item.getImageUrl())
-        Log.d("MapFragment", "Intent to open GalleryViewActivity with photoUrl: ${item.getImageUrl()}")
-        startActivity(intent)
-    }
-
-
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
