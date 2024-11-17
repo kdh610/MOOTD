@@ -93,15 +93,20 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
 
         clusterManager.setOnClusterItemClickListener { clusterItem ->
+
             // 개별 아이템 클릭 시 상세화면으로 이동
             val photoId = clusterItem.getImageId()
             val imageUrl = clusterItem.getOriginalImageUrl()
 
+            val bundle = Bundle().apply {
+                putString("photoId", clusterItem.getImageId())
+                putString("originalImageUrl", clusterItem.getOriginalImageUrl())
+                putString("personGuidelineUrl", clusterItem.personGuidelineUrl)
+                putString("backgroundGuidelineUrl", clusterItem.backgroundGuidelineUrl)
+            }
+            findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
 
-            Log.d("ClusterItemClick", "Photo ID: $photoId")
-            Log.d("ClusterItemClick", "Image URL: $imageUrl")
-
-            openDetailFragment(photoId, imageUrl)
+//            openDetailFragment(photoId, imageUrl)
             true
         }
 

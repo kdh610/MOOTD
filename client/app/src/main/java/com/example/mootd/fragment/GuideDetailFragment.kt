@@ -43,8 +43,6 @@ class GuideDetailFragment : Fragment() {
         val personGuidelineUrl = arguments?.getString("personGuidelineUrl")
         val backgroundGuidelineUrl = arguments?.getString("backgroundGuidelineUrl")
 
-        Log.d("argument check okhttp", "guide detail argument id: ${photoId}")
-
         originalImageUrl?.let {
             Glide.with(this).load(it).into(binding.imageView)
         }

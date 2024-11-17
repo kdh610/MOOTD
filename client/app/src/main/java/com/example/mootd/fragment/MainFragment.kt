@@ -117,7 +117,7 @@ class MainFragment : Fragment(), SensorEventListener {
         cameraManager.setCameraSelector(isFrontCamera)
         guideOverlayManager = GuideOverlayManager(binding)
         guideRecyclerManager = GuideRecyclerManager(requireContext(), binding, guideOverlayManager, guideOverlayViewModel) { originalUrl, personUrl, backgroundUrl ->
-            guideOverlayManager.setOverlayButtons()
+            guideOverlayManager.setOverlayButtons(personUrl != null)
             guideOverlayViewModel.setGuideImages(originalUrl, personUrl, backgroundUrl)
             updateOverlayImages()
         }
@@ -232,7 +232,7 @@ class MainFragment : Fragment(), SensorEventListener {
 
     private fun loadGuideImages() {
         if (guideOverlayViewModel.originalImageUrl.value != null) {
-            guideOverlayManager.setOverlayButtons()
+            guideOverlayManager.setOverlayButtons(guideOverlayViewModel.personGuideImageUrl.value != null)
             updateOverlayImages()
         }
         else {
