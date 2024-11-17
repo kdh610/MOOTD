@@ -22,12 +22,12 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
         }
     }
 
-    fun setOverlayButtons() {
+    fun setOverlayButtons(hasPerson: Boolean) {
         binding.btnOriginalGuide.isSelected = true
         binding.btnPersonGuide.isSelected = false
         binding.btnBackgroundGuide.isSelected = false
         binding.btnOriginalGuide.visibility = View.VISIBLE
-        binding.btnPersonGuide.visibility = View.VISIBLE
+        binding.btnPersonGuide.visibility = if (hasPerson == true) View.VISIBLE else View.GONE
         binding.btnBackgroundGuide.visibility = View.VISIBLE
     }
 
