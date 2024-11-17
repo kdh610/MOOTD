@@ -12,11 +12,13 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mootd.R
 import com.example.mootd.adapter.GalleryAdapter
+import com.example.mootd.adapter.GuideAdapter
+import com.example.mootd.adapter.UnifiedPhotoData
 
 class MapClusterGalleryFragment : Fragment() {
 
     private lateinit var galleryRecyclerView: RecyclerView
-    private lateinit var galleryAdapter: GalleryAdapter
+    private lateinit var guideAdapter: GuideAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,42 +30,34 @@ class MapClusterGalleryFragment : Fragment() {
         galleryRecyclerView = view.findViewById(R.id.recyclerView)
         galleryRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
 
-        val photoUrlsWithId: List<Pair<String?, String>>? =
-            arguments?.getSerializable("photoUrlsWithId") as? List<Pair<String?, String>>
-        val photoUrlsWithoutId: List<String>? =
-            arguments?.getStringArrayList("photoUrlsWithoutId")
+        val photoDataList = arguments?.getSerializable("photoData") as? ArrayList<Map<String, String>>
 
-        Log.d("MapClusterGalleryFragment", "photoUrlsWithId: $photoUrlsWithId, photoUrlsWithoutId: $photoUrlsWithoutId")
+        if (!photoDataList.isNullOrEmpty()) {
+            val unifiedPhotoDataList = photoDataList.map { photoData ->
+                UnifiedPhotoData(
+                    photoId = photoData["photoId"],
+                    originalImageUrl = photoData["originalImageUrl"] ?: "",
+                    personGuidelineUrl = photoData["personGuidelineUrl"],
+                    backgroundGuidelineUrl = photoData["backgroundGuidelineUrl"]
+                )
+            }
 
-        galleryAdapter = when {
-            // photoUrlsWithId가 null이 아니면
-            photoUrlsWithId != null -> {
-                GalleryAdapter(photoUrlsWithId) { imageId, imageUri ->
-                    // 이미지를 클릭했을 때 Bundle에 데이터 담아 GuideDetailFragment로 이동
-                    val bundle = Bundle().apply {
-                        putString("photoId", imageId)
-                        putString("imageUrl", imageUri)
-                    }
-                    findNavController().navigate(R.id.action_mapClusterGalleryFragment_to_guideDetailFragment, bundle)
+            guideAdapter = GuideAdapter(unifiedPhotoDataList, R.layout.item_gallery_image) { photoData ->
+                // 클릭 이벤트 처리
+                val bundle = Bundle().apply {
+                    putString("photoId", photoData.photoId)
+                    putString("originalImageUrl", photoData.originalImageUrl)
+                    putString("personGuidelineUrl", photoData.personGuidelineUrl)
+                    putString("backgroundGuidelineUrl", photoData.backgroundGuidelineUrl)
                 }
+                findNavController().navigate(R.id.action_mapClusterGalleryFragment_to_guideDetailFragment, bundle)
             }
-            // photoUrlsWithoutId가 null이 아니면
-            photoUrlsWithoutId != null -> {
-                GalleryAdapter(photoUrlsWithoutId) { imageUri ->
-                    // 사진 ID가 없는 경우에도 클릭 이벤트 처리
-                    val bundle = Bundle().apply {
-                        putString("imageUrl", imageUri)
-                    }
-                    findNavController().navigate(R.id.action_mapClusterGalleryFragment_to_guideDetailFragment, bundle)
-                }
-            }
-            else -> {
-                Toast.makeText(requireContext(), "이미지 데이터가 없습니다.", Toast.LENGTH_SHORT).show()
-                return view // 이미지 데이터가 없으면 리턴
-            }
+            galleryRecyclerView.adapter = guideAdapter
+        } else {
+            Log.e("MapClusterGalleryFragment", "No photo data available")
+            Toast.makeText(requireContext(), "이미지 데이터가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        galleryRecyclerView.adapter = galleryAdapter
         return view
     }
 

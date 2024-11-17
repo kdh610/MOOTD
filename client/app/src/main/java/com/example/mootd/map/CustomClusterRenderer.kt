@@ -44,7 +44,7 @@ class CustomClusterRenderer(
     // 클러스터가 클릭되었을 때 호출되는 함수
     private fun onClusterClicked(cluster: Cluster<PhotoClusterItem>) {
         val photoList = cluster.items.map {
-            Pair(it.title, it.getImageUrl()) // 클러스터 내 각 항목의 ID와 URL로 리스트 생성
+            Pair(it.title, it.getOriginalImageUrl()) // 클러스터 내 각 항목의 ID와 URL로 리스트 생성
         }
 
         Log.d("ClusterClicked", "Photo List: $photoList")

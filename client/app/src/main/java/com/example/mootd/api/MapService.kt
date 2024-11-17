@@ -22,6 +22,8 @@ data class ResponseData(
 data class PhotoResponse(
     val photoId: String,
     val maskImageUrl: String,
+    val personGuidelineUrl: String,
+    val backgroundGuidelineUrl: String,
     val latitude: Double,
     val longitude: Double,
     val imageUrls: List<String>

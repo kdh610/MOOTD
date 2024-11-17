@@ -98,17 +98,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun openGalleryViewForCluster(cluster: Cluster<PhotoClusterItem>) {
-        val photoUrlsWithId = cluster.items
-            .filter { it.getImageId() != null }
-            .map { Pair(it.getImageId(), it.getImageUrl()) }
-
-        val photoUrlsWithoutId = cluster.items
-            .filter { it.getImageId() == null }
-            .map { it.getImageUrl() }
-
+        val photoData = cluster.items.map { clusterItem ->
+            mapOf(
+                "photoId" to clusterItem.getImageId(),
+                "originalImageUrl" to clusterItem.getOriginalImageUrl(),
+                "personGuidelineUrl" to clusterItem.personGuidelineUrl,
+                "backgroundGuidelineUrl" to clusterItem.backgroundGuidelineUrl
+            )
+        }
         val bundle = Bundle().apply {
-            putSerializable("photoUrlsWithId", ArrayList(photoUrlsWithId))
-            putStringArrayList("photoUrlsWithoutId", ArrayList(photoUrlsWithoutId))
+            putSerializable("photoData", ArrayList(photoData))
         }
 
         findNavController().navigate(R.id.mapClusterGalleryFragment, bundle)
@@ -172,6 +171,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         "Latitude: ${photo.latitude}, Longitude: ${photo.longitude}",
                         photo.maskImageUrl,
                         photo.photoId,
+                        photo.personGuidelineUrl,
+                        photo.backgroundGuidelineUrl,
                         markerBitmap
                     )
                     Log.d("CustomMarker", "maskImageUrl: ${photo.maskImageUrl}")
