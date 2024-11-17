@@ -1,19 +1,21 @@
 package com.example.mootd.fragment
 
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.mootd.R
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.api.UsageRequest
 import com.example.mootd.databinding.FragmentGuideDetailBinding
+import com.example.mootd.utils.DeviceUtils
+import com.example.mootd.viewmodel.GuideOverlayViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -23,6 +25,7 @@ class GuideDetailFragment : Fragment() {
 
     private var _binding: FragmentGuideDetailBinding? = null
     private val binding get() = _binding!!
+    private val guideOverlayViewModel: GuideOverlayViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,11 +39,13 @@ class GuideDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val photoId = arguments?.getString("photoId")
-        val imageUrl = arguments?.getString("imageUrl")
+        val originalImageUrl = arguments?.getString("originalImageUrl")
+        val personGuidelineUrl = arguments?.getString("personGuidelineUrl")
+        val backgroundGuidelineUrl = arguments?.getString("backgroundGuidelineUrl")
 
         Log.d("argument check okhttp", "guide detail argument id: ${photoId}")
 
-        imageUrl?.let {
+        originalImageUrl?.let {
             Glide.with(this).load(it).into(binding.imageView)
         }
 
@@ -49,16 +54,18 @@ class GuideDetailFragment : Fragment() {
         }
 
         binding.cameraButton.setOnClickListener{
-            val deviceId = getDeviceId()
-            if (deviceId != null && photoId != null) {
+            val deviceId = DeviceUtils.getDeviceId(requireContext())
+            if (photoId != null) {
                 postUsageData(deviceId, photoId)
             }
 
-            val bundle = Bundle().apply {
-                putString("photoId", photoId)
-                putBoolean("hasGuide", true)
-            }
-            findNavController().navigate(R.id.action_guideDetailFragment_to_mainFragment, bundle)
+            guideOverlayViewModel.setGuideImages(
+                originalUrl = originalImageUrl,
+                personUrl = personGuidelineUrl,
+                backgroundUrl = backgroundGuidelineUrl
+            )
+
+            findNavController().navigate(R.id.action_guideDetailFragment_to_mainFragment)
         }
     }
 
@@ -78,10 +85,6 @@ class GuideDetailFragment : Fragment() {
                 Toast.makeText(context, "네트워크 오류 발생", Toast.LENGTH_SHORT).show()
             }
         })
-    }
-
-    private fun getDeviceId(): String? {
-        return Settings.Secure.getString(requireContext().contentResolver, Settings.Secure.ANDROID_ID)
     }
 
 
