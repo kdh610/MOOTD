@@ -22,5 +22,7 @@ data class SearchPhotoData(
     val tag: List<String>,
     val originImageUrl: String,
     val guideImageUrl: String,
-    val maskImageUrl: String
+    val maskImageUrl: String,
+    val personGuidelineUrl: String,
+    val backgroundGuidelineUrl: String
 )

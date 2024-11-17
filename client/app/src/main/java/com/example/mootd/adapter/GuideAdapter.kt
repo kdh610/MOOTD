@@ -48,7 +48,7 @@ class GuideAdapter(
         }
 
         holder.itemView.setOnClickListener {
-            onItemClick(photoData) // photoId가 없으면 originImageUrl 전달
+            onItemClick(photoData)
         }
     }
 

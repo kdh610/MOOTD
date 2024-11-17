@@ -16,10 +16,10 @@ import android.view.inputmethod.InputMethodManager
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.mootd.api.RetrofitInstance
 import com.example.mootd.api.SearchResponse
-import android.content.SharedPreferences
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.mootd.adapter.GuideAdapter
 import com.example.mootd.adapter.SearchHistoryAdapter
+import com.example.mootd.adapter.UnifiedPhotoData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import retrofit2.Call
@@ -34,6 +34,8 @@ class SearchFragment : Fragment() {
     private lateinit var galleryAdapter: GalleryAdapter
     private lateinit var searchHistoryAdapter: SearchHistoryAdapter
     private var searchHistory: MutableList<String> = mutableListOf()
+
+    private lateinit var guideAdapter: GuideAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -65,7 +67,6 @@ class SearchFragment : Fragment() {
         binding.btnSearch.setOnClickListener {
             performSearch()
         }
-
 
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
@@ -119,31 +120,37 @@ class SearchFragment : Fragment() {
 
     private fun searchPhotos(query: String) {
         binding.errorLayout.visibility = View.GONE
+        binding.recyclerViewSearchHistory.visibility = View.GONE
         RetrofitInstance.guideSearchService.searchPhotosByTag(query).enqueue(object : Callback<SearchResponse> {
             override fun onResponse(call: Call<SearchResponse>, response: Response<SearchResponse>) {
                 if (response.isSuccessful) {
-                    val photoList = response.body()?.data?.map {
-                        Pair(it.id, it.originImageUrl) // imageId와 originImageUrl을 Pair로 저장
+                    val photoList = response.body()?.data?.map { photo ->
+                        UnifiedPhotoData(
+                            photoId = photo.id,
+                            originalImageUrl = photo.maskImageUrl,
+                            personGuidelineUrl = photo.personGuidelineUrl,
+                            backgroundGuidelineUrl = photo.backgroundGuidelineUrl
+                        )
                     } ?: emptyList()
 
                     if (photoList.isNotEmpty()) {
                         // 검색 결과가 있을 때
-                        galleryAdapter = GalleryAdapter(photoList) { photoId, imageUrl ->
+                        guideAdapter = GuideAdapter(photoList, R.layout.item_gallery_image) { photoData ->
                             val bundle = Bundle().apply {
-                                putString("photoId", photoId)
-                                putString("imageUrl", imageUrl)
+                                putString("photoId", photoData.photoId)
+                                putString("originalImageUrl", photoData.originalImageUrl)
+                                putString("personGuidelineUrl", photoData.personGuidelineUrl)
+                                putString("backgroundGuidelineUrl", photoData.backgroundGuidelineUrl)
                             }
                             findNavController().navigate(R.id.action_searchFragment_to_guideDetailFragment, bundle)
                         }
-                        binding.recyclerViewSearchResults.adapter = galleryAdapter
+                        binding.recyclerViewSearchResults.adapter = guideAdapter
                         binding.recyclerViewSearchResults.visibility = View.VISIBLE
                         binding.emptyTextView.visibility = View.GONE
-                        binding.recyclerViewSearchHistory.visibility = View.GONE
                     } else {
                         // 검색 결과가 없을 때
                         binding.recyclerViewSearchResults.visibility = View.GONE
                         binding.emptyTextView.visibility = View.VISIBLE
-                        binding.recyclerViewSearchHistory.visibility = View.GONE
                     }
                 } else {
                     showNetworkErrorMessage()

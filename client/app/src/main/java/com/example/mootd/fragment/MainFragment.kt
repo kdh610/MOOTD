@@ -235,44 +235,9 @@ class MainFragment : Fragment(), SensorEventListener {
             guideOverlayManager.setOverlayButtons()
             updateOverlayImages()
         }
-//        else if (hasGuide) {
-//            guideOverlayManager.setOverlayButtons()
-//            val isLocal = arguments?.getBoolean("isLocal") ?: false
-//            if (isLocal) {
-//                guideOverlayViewModel.setGuideImages(
-//                    arguments?.getString("originalImagePath"),
-//                    arguments?.getString("personGuideImagePath"),
-//                    arguments?.getString("backgroundGuideImagePath")
-//                )
-//            } else {
-//                val photoId = arguments?.getString("photoId")
-//                photoId?.let { fetchGuideData(it) }
-//            }
-//            updateOverlayImages()
-//        }
         else {
             guideOverlayManager.clearOverlay()
         }
-    }
-
-    fun fetchGuideData(photoId: String) {
-        val call = RetrofitInstance.guideDetailService.getPhotoData(photoId)
-        call.enqueue(object : Callback<GuideDetailResponse> {
-            override fun onResponse(call: Call<GuideDetailResponse>, response: Response<GuideDetailResponse>) {
-                if (response.isSuccessful) {
-                    response.body()?.data?.let {
-                        guideOverlayViewModel.setGuideImages(it.maskImageUrl, it.personGuidelineUrl, it.backgroundGuidelineUrl)
-                    }
-                } else {
-                    Log.e("API ERROR", "Response code: ${response.code()}")
-                }
-            }
-
-            override fun onFailure(call: Call<GuideDetailResponse>, t: Throwable) {
-                Log.e("API ERROR", "Network error: ${t.message}")
-            }
-        })
-
     }
 
 
