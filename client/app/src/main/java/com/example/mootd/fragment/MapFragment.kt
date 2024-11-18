@@ -57,7 +57,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         val view = inflater.inflate(R.layout.fragment_map, container, false)
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
@@ -73,30 +72,27 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mMap = googleMap
 
         // 클러스터 매니저 초기화
-
         clusterManager = ClusterManager(requireContext(), mMap)
 
-        val customClusterRenderer = CustomClusterRenderer(this, requireContext(), mMap, clusterManager)
+        val customClusterRenderer = CustomClusterRenderer(requireContext(), mMap, clusterManager)
         clusterManager.renderer = customClusterRenderer
+
 
         // 확대/축소 및 카메라 이동 시 클러스터를 다시 렌더링
         mMap.setOnCameraIdleListener {
-            clusterManager.cluster() // 클러스터 다시 계산
+            clusterManager.cluster()
         }
 
         mMap.setOnMarkerClickListener(clusterManager)
 
-
+        //클러스터 클릭 시 이벤트
         clusterManager.setOnClusterClickListener { cluster ->
             openGalleryViewForCluster(cluster)
             true
         }
 
+        //개별 이미지 클릭 시 이벤트
         clusterManager.setOnClusterItemClickListener { clusterItem ->
-
-            // 개별 아이템 클릭 시 상세화면으로 이동
-            val photoId = clusterItem.getImageId()
-            val imageUrl = clusterItem.getOriginalImageUrl()
 
             val bundle = Bundle().apply {
                 putString("photoId", clusterItem.getImageId())
@@ -106,7 +102,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
             findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
 
-//            openDetailFragment(photoId, imageUrl)
             true
         }
 
@@ -127,17 +122,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
 
         findNavController().navigate(R.id.mapClusterGalleryFragment, bundle)
-    }
-
-    private fun openDetailFragment(photoId: String, originalImageUrl: String) {
-        Log.d("openDetailFragment", "photoId: $photoId, imageUrl: $originalImageUrl")
-        val bundle = Bundle().apply {
-            putString("photoId", photoId)
-            putString("originalImageUrl", originalImageUrl)
-        }
-
-        // GuideDetailFragment로 이동
-        findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
     }
 
 
@@ -184,8 +168,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                     val clusterItem = PhotoClusterItem(
                         position,
-                        "Photo ID: ${photo.photoId}",
-                        "Latitude: ${photo.latitude}, Longitude: ${photo.longitude}",
+                        "",
+                        "",
                         photo.maskImageUrl,
                         photo.photoId,
                         photo.personGuidelineUrl,
