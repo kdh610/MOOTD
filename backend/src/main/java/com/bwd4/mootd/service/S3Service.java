@@ -1,24 +1,25 @@
 package com.bwd4.mootd.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.*;
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
+import com.bwd4.mootd.domain.Photo;
 import com.bwd4.mootd.enums.ImageType;
+
+import java.io.*;
 import java.util.Base64;
+
+import com.bwd4.mootd.repository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -36,7 +37,9 @@ public class S3Service {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
-    
+
+    private final PhotoRepository photoRepository;
+
     // 파일 업로드 요청
     public String upload(MultipartFile file, ImageType imageType) throws IOException {
         if(file.isEmpty() || Objects.isNull(file.getOriginalFilename())) {
@@ -137,5 +140,56 @@ public class S3Service {
         }
     }
 
+    public Mono<Void> generateThumbnailsForAllPhotos() {
+        return photoRepository.findAll()
+                .concatMap(this::processPhoto) // 순차적으로 처리
+                .then();
+    }
 
+    private Mono<Photo> processPhoto(Photo photo) {
+        return Mono.fromCallable(() -> {
+
+                    if(photo.getThumbnailUrl() != null) return photo;
+                    String maskImageUrl = photo.getMaskImageUrl();
+                    String imageKey = extractKeyFromUrl(maskImageUrl);
+
+                    // S3에서 원본 이미지 가져오기
+                    S3Object s3Object = amazonS3.getObject(bucketName, imageKey);
+                    InputStream originalImageStream = s3Object.getObjectContent();
+
+                    // 썸네일 생성
+                    ByteArrayOutputStream thumbnailStream = new ByteArrayOutputStream();
+                    Thumbnails.of(originalImageStream)
+                            .size(300, 300) // 썸네일 크기
+                            .outputFormat("png") // 썸네일 포맷
+                            .toOutputStream(thumbnailStream);
+
+                    // 썸네일 업로드
+                    String thumbnailKey = "thumbnail/" + imageKey.substring(imageKey.lastIndexOf("/") + 1);
+                    String thumbnailUrl = uploadImageToS3(
+                            new ByteArrayInputStream(thumbnailStream.toByteArray()), // InputStream
+                            thumbnailKey, // 파일명 또는 경로
+                            thumbnailStream.size(), // 파일 크기
+                            "image/png", // MIME 타입
+                            ImageType.THUMBNAIL // ImageType
+                    );
+
+                    // DB에 썸네일 URL 업데이트
+                    photo.setThumbnailUrl(thumbnailUrl);
+
+                    return photo;
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(photoRepository::save);
+    }
+
+
+
+    private String extractKeyFromUrl(String url) {
+        String baseUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/";
+        if (url.startsWith(baseUrl)) {
+            return url.substring(baseUrl.length());
+        }
+        throw new IllegalArgumentException("Invalid S3 URL: " + url);
+    }
 }

@@ -1,5 +1,7 @@
 package com.bwd4.mootd.service;
 
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.domain.*;
@@ -40,6 +42,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -365,4 +368,5 @@ public class PhotoService {
                 .subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업을 별도 스레드 풀에서 처리
                 .onErrorMap(IOException.class, e -> new RuntimeException("S3 업로드 실패", e));
     }
+
 }

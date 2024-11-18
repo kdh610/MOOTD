@@ -46,8 +46,12 @@ public class Photo {
 
     @Field("background_guideline_url")
     private String backgroundGuidelineUrl;
+
     @Field("mask_image_url")
     private String maskImageUrl;
+
+    @Field("thumbnail_url")
+    private String thumbnailUrl; // 새로 추가된 컬럼
 
     private Boolean flag;
 
@@ -65,6 +69,9 @@ public class Photo {
         this.coordinates = new GeoJsonPoint(longitude, latitude);
     }
 
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
     public void setOriginImageUrl(String originImageUrl) {
         this.originImageUrl = originImageUrl;
     }
@@ -80,7 +87,6 @@ public class Photo {
     public void setBackgroundGuidelineUrl(String backgroundGuidelineUrl) {
         this.backgroundGuidelineUrl = backgroundGuidelineUrl;
     }
-
     public void setMaskImageUrl(String maskImageUrl) {
         this.maskImageUrl = maskImageUrl;
     }
