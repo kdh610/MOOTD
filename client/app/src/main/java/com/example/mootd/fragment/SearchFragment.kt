@@ -31,7 +31,6 @@ class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    private lateinit var galleryAdapter: GalleryAdapter
     private lateinit var searchHistoryAdapter: SearchHistoryAdapter
     private var searchHistory: MutableList<String> = mutableListOf()
 
@@ -90,11 +89,12 @@ class SearchFragment : Fragment() {
     private fun performSearch() {
         val query = binding.etSearchQuery.text.toString()
         if (query.isNotEmpty()) {
-            if (!searchHistory.contains(query)) {
-                searchHistory.add(query)
-                saveSearchHistory()  // 검색 기록 저장
-                searchHistoryAdapter.notifyDataSetChanged() // 어댑터 갱신
-            }
+//            if (!searchHistory.contains(query)) {
+            searchHistory.remove(query)
+            searchHistory.add(0, query)
+            saveSearchHistory()  // 검색 기록 저장
+            searchHistoryAdapter.notifyDataSetChanged() // 어댑터 갱신
+//            }
             searchPhotos(query)
             hideKeyboard()
         } else {

@@ -137,9 +137,96 @@ class PictureDetailFragment : Fragment() {
         }
     }
 
+
+//    private fun loadBitmapFromPath(path: String): Bitmap {
+//        val startTime = System.currentTimeMillis()
+//        Log.d("Performance", "Bitmap decoding took ${System.currentTimeMillis() - startTime} ms")
+//        val options = BitmapFactory.Options().apply {
+//            inJustDecodeBounds = true
+//        }
+//        BitmapFactory.decodeFile(path, options)
+//
+//        // 이미지 축소 비율 계산
+//        options.inSampleSize = calculateInSampleSize(options, 1024, 1024) // 원하는 크기로 축소
+//        options.inJustDecodeBounds = false
+//
+//        val bitmap = BitmapFactory.decodeFile(path, options)
+//        val exif = androidx.exifinterface.media.ExifInterface(path)
+//
+//        // 이미지의 회전 각도 가져오기
+//        val orientation = exif.getAttributeInt(
+//            androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+//            androidx.exifinterface.media.ExifInterface.ORIENTATION_UNDEFINED
+//        )
+//
+//        val rotatedBitmap = when (orientation) {
+//            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(bitmap, 90f)
+//            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(bitmap, 180f)
+//            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotateImage(bitmap, 270f)
+//            else -> bitmap // 회전이 필요 없는 경우
+//        }
+//        Log.d("Performance", "Bitmap rotation took ${System.currentTimeMillis() - startTime} ms")
+//
+//        return rotatedBitmap
+//    }
+//
+//    // inSampleSize 계산 함수
+//    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+//        val (height: Int, width: Int) = options.run { outHeight to outWidth }
+//        var inSampleSize = 1
+//
+//        if (height > reqHeight || width > reqWidth) {
+//            val halfHeight: Int = height / 2
+//            val halfWidth: Int = width / 2
+//
+//            // 크기를 줄이면서 메모리 사용량 최소화
+//            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+//                inSampleSize *= 2
+//            }
+//        }
+//
+//        return inSampleSize
+//    }
+//
+//    private fun rotateImage(source: Bitmap, angle: Float): Bitmap {
+//        val matrix = android.graphics.Matrix()
+//        matrix.postRotate(angle)
+//        val rotatedBitmap = Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+//        source.recycle() // 원본 Bitmap 메모리 해제
+//        return rotatedBitmap
+//    }
+
+//
     private fun loadBitmapFromPath(path: String): Bitmap {
-        return BitmapFactory.decodeFile(path)
+        val startTime = System.currentTimeMillis()
+        val bitmap = BitmapFactory.decodeFile(path)
+        Log.d("Performance", "Bitmap decoding took ${System.currentTimeMillis() - startTime} ms")
+        val exif = androidx.exifinterface.media.ExifInterface(path)
+
+        // 이미지의 회전 각도 가져오기
+        val orientation = exif.getAttributeInt(
+            androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_UNDEFINED
+        )
+
+        val rotatedBitmap = when (orientation) {
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(bitmap, 90f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(bitmap, 180f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotateImage(bitmap, 270f)
+            else -> bitmap
+        }
+
+        Log.d("Performance", "Bitmap rotation took ${System.currentTimeMillis() - startTime} ms")
+        return rotatedBitmap
     }
+
+    private fun rotateImage(source: Bitmap, angle: Float): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(angle)
+        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+    }
+
+
 
     private fun loadImageFromUrl(url: String): Bitmap {
         val connection = java.net.URL(url).openConnection()
@@ -156,7 +243,7 @@ class PictureDetailFragment : Fragment() {
         withContext(Dispatchers.IO) {
             bitmap?.let {
                 FileOutputStream(file).use { out ->
-                    it.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                    it.compress(Bitmap.CompressFormat.PNG, 80, out)
                 }
             }
         }

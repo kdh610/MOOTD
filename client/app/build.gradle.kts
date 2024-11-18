@@ -82,9 +82,9 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.8.3")
 
     // Camera X
-    implementation ("androidx.camera:camera-camera2:1.1.0")
-    implementation ("androidx.camera:camera-lifecycle:1.1.0")
-    implementation ("androidx.camera:camera-view:1.1.0")
+    implementation ("androidx.camera:camera-camera2:1.3.0")
+    implementation ("androidx.camera:camera-lifecycle:1.3.0")
+    implementation ("androidx.camera:camera-view:1.3.0")
 
     // Google Map
     implementation ("com.google.android.gms:play-services-maps:17.0.0")
