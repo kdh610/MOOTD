@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -35,7 +36,7 @@ public class AIService {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
                 .build();
 
         this.tagAIClient = WebClient.builder()
@@ -43,7 +44,7 @@ public class AIService {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
                 .build();
 
         this.guideLineAiClient = WebClient.builder()
@@ -51,7 +52,7 @@ public class AIService {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
                 ))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
                 .build();
     }
 
@@ -67,6 +68,7 @@ public class AIService {
                 .map(dataBuffer -> {
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];
                     dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
                     return bytes;
                 });
     }
