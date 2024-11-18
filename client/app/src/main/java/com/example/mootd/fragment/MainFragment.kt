@@ -169,6 +169,14 @@ class MainFragment : Fragment(), SensorEventListener {
         binding.settingsOverlay.setOnClickListener {
             binding.settingsOverlay.visibility = View.GONE
         }
+        binding.viewFinder.setOnClickListener {
+            if(binding.horizontalLayout.visibility == View.VISIBLE) {
+                binding.horizontalLayout.visibility = View.GONE
+                binding.btnGuide.visibility = View.VISIBLE
+                binding.btnCapture.visibility = View.VISIBLE
+                binding.btnGallery.visibility = View.VISIBLE
+            }
+        }
         binding.settingsOverlay.findViewById<LinearLayout>(R.id.settingsContainer).setOnClickListener {
             // 내부 클릭 이벤트는 아무 동작도 하지 않음
         }
@@ -227,6 +235,7 @@ class MainFragment : Fragment(), SensorEventListener {
         binding.horizontalLayout.visibility = if (isVisible) View.VISIBLE else View.GONE
         binding.btnCapture.visibility = if (isVisible) View.GONE else View.VISIBLE
         binding.btnGallery.visibility = if (isVisible) View.GONE else View.VISIBLE
+        binding.btnGuide.visibility = if (isVisible) View.GONE else View.VISIBLE
     }
 
     private fun setupUI() {
