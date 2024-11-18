@@ -4,5 +4,6 @@ public enum ImageType {
     ORIGINAL,
     PEOPLE,
     BACKGROUND,
-    MASKING
+    MASKING,
+    THUMBNAIL
 }

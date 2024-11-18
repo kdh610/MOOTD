@@ -27,6 +27,9 @@ spring:
 #      key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
 #      value-serializer: "org.apache.kafka.common.serialization.JsonSerializer"
 
+server:
+  tomcat:
+    connection-timeout: 20000 # 20초
 
 
 cloud:
