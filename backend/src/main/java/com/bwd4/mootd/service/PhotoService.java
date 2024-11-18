@@ -220,6 +220,7 @@ public class PhotoService {
         Point location = new Point(longitude, latitude);
         Distance radius = new Distance(rad, Metrics.KILOMETERS);
         return photoRepository.findByCoordinatesNear(location, radius)
+                .filter(photo -> photo.getBackgroundGuidelineUrl() != null) // BackgroundGuidelineUrl이 null이 아닌 경우에만 필터링
                 .map(photo -> new MapResponseDTO(
                         photo.getId(),
                         photo.getMaskImageUrl(),
