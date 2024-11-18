@@ -39,6 +39,7 @@ services:
       KAFKA_SERVER: ${KAFKA_SERVER}
       ES_USERNAME : ${ES_USERNAME}
       ES_PASSWORD : ${ES_PASSWORD}
+      EDGE_URL: ${EDGE_URL}
     depends_on:
       - kafka  # Kafka가 먼저 시작된 후 Spring 앱 시작
 
