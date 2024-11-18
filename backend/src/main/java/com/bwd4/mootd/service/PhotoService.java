@@ -126,6 +126,13 @@ public class PhotoService {
                         () -> s3Service.upload(maskBytes, "masked_file.png", ImageType.MASKING)))
                 .flatMap(maskUrl -> {
                     photo.setMaskImageUrl(maskUrl);
+                    String thumbnailUrl = null;
+                    try {
+                        thumbnailUrl = s3Service.uploadAndGetThumbnailUrl(maskUrl);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    photo.setThumbnailUrl(thumbnailUrl);
                     return photoRepository.save(photo);
                 })
                 .doOnSuccess(updatedPhoto -> log.info("마스크 이미지 추가 저장된 Photo 객체: {}", updatedPhoto));
@@ -173,9 +180,8 @@ public class PhotoService {
         // 이미지 S3 업로드
         String imageUrl = s3Service.upload(fileBytes, "파일명.png", ImageType.ORIGINAL);
 
-        String thumbnailUrl = s3Service.createAndUploadThumbnail(fileBytes, request.originImageFilename());
         //마스크 처리
-        return new UploadResult(imageUrl, thumbnailUrl, createdAt, request.latitude(), request.longitude());
+        return new UploadResult(imageUrl, null, createdAt, request.latitude(), request.longitude());
     }
 
     private Map<String, Object> extractMetadata(ByteArrayInputStream inputStream) {
@@ -230,6 +236,7 @@ public class PhotoService {
                         photo.getMaskImageUrl(),
                         photo.getPersonGuidelineUrl(),
                         photo.getBackgroundGuidelineUrl(),
+                        photo.getThumbnailUrl(),
                         photo.getCoordinates().getY(),  // latitude
                         photo.getCoordinates().getX()   // longitude
                 ));

@@ -148,32 +148,9 @@ public class S3Service {
 
     private Mono<Photo> processPhoto(Photo photo) {
         return Mono.fromCallable(() -> {
-
                     if(photo.getThumbnailUrl() != null) return photo;
                     String maskImageUrl = photo.getMaskImageUrl();
-                    String imageKey = extractKeyFromUrl(maskImageUrl);
-
-                    // S3에서 원본 이미지 가져오기
-                    S3Object s3Object = amazonS3.getObject(bucketName, imageKey);
-                    InputStream originalImageStream = s3Object.getObjectContent();
-
-                    // 썸네일 생성
-                    ByteArrayOutputStream thumbnailStream = new ByteArrayOutputStream();
-                    Thumbnails.of(originalImageStream)
-                            .size(300, 300) // 썸네일 크기
-                            .outputFormat("png") // 썸네일 포맷
-                            .toOutputStream(thumbnailStream);
-
-                    // 썸네일 업로드
-                    String thumbnailKey = "thumbnail/" + imageKey.substring(imageKey.lastIndexOf("/") + 1);
-                    String thumbnailUrl = uploadImageToS3(
-                            new ByteArrayInputStream(thumbnailStream.toByteArray()), // InputStream
-                            thumbnailKey, // 파일명 또는 경로
-                            thumbnailStream.size(), // 파일 크기
-                            "image/png", // MIME 타입
-                            ImageType.THUMBNAIL // ImageType
-                    );
-
+                    String thumbnailUrl = uploadAndGetThumbnailUrl(maskImageUrl);
                     // DB에 썸네일 URL 업데이트
                     photo.setThumbnailUrl(thumbnailUrl);
 
@@ -181,6 +158,32 @@ public class S3Service {
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(photoRepository::save);
+    }
+
+    String uploadAndGetThumbnailUrl(String imageUrl) throws IOException {
+
+        String imageKey = extractKeyFromUrl(imageUrl);
+        // S3에서 원본 이미지 가져오기
+        S3Object s3Object = amazonS3.getObject(bucketName, imageKey);
+        InputStream originalImageStream = s3Object.getObjectContent();
+
+        // 썸네일 생성
+        ByteArrayOutputStream thumbnailStream = new ByteArrayOutputStream();
+        Thumbnails.of(originalImageStream)
+                .size(300, 300) // 썸네일 크기
+                .outputFormat("png") // 썸네일 포맷
+                .toOutputStream(thumbnailStream);
+
+        // 썸네일 업로드
+        String thumbnailKey = "thumbnail/" + imageKey.substring(imageKey.lastIndexOf("/") + 1);
+        String thumbnailUrl = uploadImageToS3(
+                new ByteArrayInputStream(thumbnailStream.toByteArray()), // InputStream
+                thumbnailKey, // 파일명 또는 경로
+                thumbnailStream.size(), // 파일 크기
+                "image/png", // MIME 타입
+                ImageType.THUMBNAIL // ImageType
+        );
+        return thumbnailUrl;
     }
 
     private String extractKeyFromUrl(String url) {

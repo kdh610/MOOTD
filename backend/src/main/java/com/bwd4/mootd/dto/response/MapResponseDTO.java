@@ -5,6 +5,7 @@ public record MapResponseDTO(
         String maskImageUrl,
         String personGuidelineUrl,
         String backgroundGuidelineUrl,
+        String thumbnailUrl,
         Double latitude,
         Double longitude
 ) {
