@@ -2,6 +2,7 @@ package com.example.mootd.fragment
 
 import android.content.Context
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -22,11 +23,14 @@ import android.provider.Settings
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.ScaleGestureDetector
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Toast
 import android.widget.ToggleButton
 import androidx.activity.addCallback
@@ -69,6 +73,9 @@ import org.pytorch.torchvision.TensorImageUtils
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import kotlin.math.max
+import kotlin.math.min
+
 
 
 class MainFragment : Fragment(), SensorEventListener {
@@ -94,6 +101,7 @@ class MainFragment : Fragment(), SensorEventListener {
     private lateinit var guideRecyclerManager: GuideRecyclerManager
 
     private val guideOverlayViewModel: GuideOverlayViewModel by activityViewModels()
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
 
 
     override fun onCreateView(
@@ -133,7 +141,6 @@ class MainFragment : Fragment(), SensorEventListener {
         setupNavigationButtons()
 
 
-
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         guideOverlayViewModel.showOriginal.observe(viewLifecycleOwner) { showOriginal ->
@@ -154,7 +161,53 @@ class MainFragment : Fragment(), SensorEventListener {
         sensorManager = requireActivity().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
+        binding.btnSettings.setOnClickListener {
+            toggleSettingsOverlay()
+        }
+
+        // 설정창 외부를 누르면 닫기
+        binding.settingsOverlay.setOnClickListener {
+            binding.settingsOverlay.visibility = View.GONE
+        }
+        binding.settingsOverlay.findViewById<LinearLayout>(R.id.settingsContainer).setOnClickListener {
+            // 내부 클릭 이벤트는 아무 동작도 하지 않음
+        }
+        binding.BtnCloseAllGuide.setOnClickListener {
+            guideOverlayManager.clearOverlay()
+            guideOverlayViewModel.clearGuideImages()
+        }
+        binding.seekBarOriginal.setOnSeekBarChangeListener(createSeekBarListener(binding.overlayOriginalGuide))
+        binding.seekBarPerson.setOnSeekBarChangeListener(createSeekBarListener(binding.overlayPersonGuide))
+        binding.seekBarBackground.setOnSeekBarChangeListener(createSeekBarListener(binding.overlayBackgroundGuide))
     }
+
+
+    private fun toggleSettingsOverlay() {
+        if (binding.settingsOverlay.visibility == View.GONE) {
+            binding.settingsOverlay.visibility = View.VISIBLE
+        } else {
+            binding.settingsOverlay.visibility = View.GONE
+        }
+    }
+
+    private fun createSeekBarListener(targetView: ImageView): SeekBar.OnSeekBarChangeListener {
+        return object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                targetView.alpha = progress / 100f // 0~100 값을 0.0~1.0으로 변환
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        }
+    }
+
+    private fun showSettingsOverlay() {
+        // SeekBar의 초기값을 현재 오버레이 이미지들의 alpha 값에 맞게 설정
+        binding.seekBarOriginal.progress = (binding.overlayOriginalGuide.alpha * 100).toInt()
+        binding.seekBarPerson.progress = (binding.overlayPersonGuide.alpha * 100).toInt()
+        binding.seekBarBackground.progress = (binding.overlayBackgroundGuide.alpha * 100).toInt()
+    }
+
 
     private fun setupNavigationButtons() {
         binding.apply {
@@ -234,6 +287,7 @@ class MainFragment : Fragment(), SensorEventListener {
         if (guideOverlayViewModel.originalImageUrl.value != null) {
             guideOverlayManager.setOverlayButtons(guideOverlayViewModel.personGuideImageUrl.value != null)
             updateOverlayImages()
+            showSettingsOverlay()
         }
         else {
             guideOverlayManager.clearOverlay()
@@ -319,9 +373,6 @@ class MainFragment : Fragment(), SensorEventListener {
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
-
-
-
 
 
 
