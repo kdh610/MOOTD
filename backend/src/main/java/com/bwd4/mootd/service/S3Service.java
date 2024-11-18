@@ -183,8 +183,6 @@ public class S3Service {
                 .flatMap(photoRepository::save);
     }
 
-
-
     private String extractKeyFromUrl(String url) {
         String baseUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/";
         if (url.startsWith(baseUrl)) {
@@ -192,4 +190,23 @@ public class S3Service {
         }
         throw new IllegalArgumentException("Invalid S3 URL: " + url);
     }
+
+    String createAndUploadThumbnail(byte[] fileBytes, String originalKey) throws IOException {
+        // 썸네일 생성
+        ByteArrayOutputStream thumbnailStream = new ByteArrayOutputStream();
+        Thumbnails.of(new ByteArrayInputStream(fileBytes))
+                .size(300, 300) // 썸네일 크기
+                .outputFormat("png") // 썸네일 포맷
+                .toOutputStream(thumbnailStream);
+
+        // S3에 썸네일 업로드
+        String thumbnailKey = "thumbnail/" + originalKey.substring(originalKey.lastIndexOf("/") + 1);
+        return this.upload(
+                thumbnailStream.toByteArray(), // 파일 데이터
+                thumbnailKey, // S3 키
+                ImageType.THUMBNAIL // 이미지 타입
+        );
+    }
+
+
 }

@@ -144,7 +144,7 @@ public class PhotoService {
         photo.setCreatedAt(result.createdAt());
         photo.setCoordinates(result.longitude(), result.latitude());
         photo.setOriginImageUrl(result.originImageUrl());
-
+        photo.setThumbnailUrl(result.thumbnailUrl());
         return photoRepository.save(photo)
                 .doOnSuccess(savedPhoto -> log.info("초기 MongoDB에 저장된 Photo 객체: {}", savedPhoto))
                 .doOnError(error -> log.error("MongoDB 초기 저장 중 오류 발생: ", error));
@@ -173,8 +173,9 @@ public class PhotoService {
         // 이미지 S3 업로드
         String imageUrl = s3Service.upload(fileBytes, "파일명.png", ImageType.ORIGINAL);
 
+        String thumbnailUrl = s3Service.createAndUploadThumbnail(fileBytes, request.originImageFilename());
         //마스크 처리
-        return new UploadResult(imageUrl, createdAt, request.latitude(), request.longitude());
+        return new UploadResult(imageUrl, thumbnailUrl, createdAt, request.latitude(), request.longitude());
     }
 
     private Map<String, Object> extractMetadata(ByteArrayInputStream inputStream) {

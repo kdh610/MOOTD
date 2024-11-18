@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public record UploadResult(
         String originImageUrl,
+        String thumbnailUrl,
         LocalDateTime createdAt,
         Double latitude,
         Double longitude) {}
