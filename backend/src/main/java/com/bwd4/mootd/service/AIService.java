@@ -48,7 +48,7 @@ public class AIService {
                 .build();
 
         this.guideLineAiClient = WebClient.builder()
-                .baseUrl("http://" + "70.12.130.101:61423/" + ":8002")
+                .baseUrl("http://" + "70.12.130.101:61423/")
 //                .baseUrl("http://" + HOST + ":8002")
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().responseTimeout(java.time.Duration.ofMinutes(2))
