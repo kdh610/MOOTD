@@ -25,13 +25,25 @@ class MapClusterGalleryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_map_cluster_gallery_view, container, false)
+        // 레이아웃 inflate만 수행
+        return inflater.inflate(R.layout.fragment_map_cluster_gallery_view, container, false)
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // RecyclerView 초기화
         galleryRecyclerView = view.findViewById(R.id.recyclerView)
         galleryRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
 
-        val photoDataList = arguments?.getSerializable("photoData") as? ArrayList<Map<String, String>>
+        // backButton 이벤트 처리
+        val backButton = view.findViewById<View>(R.id.backButton)
+        backButton.setOnClickListener {
+            findNavController().popBackStack()
+        }
 
+        // 데이터 설정
+        val photoDataList = arguments?.getSerializable("photoData") as? ArrayList<Map<String, String>>
         if (!photoDataList.isNullOrEmpty()) {
             val unifiedPhotoDataList = photoDataList.map { photoData ->
                 UnifiedPhotoData(
@@ -57,9 +69,8 @@ class MapClusterGalleryFragment : Fragment() {
             Log.e("MapClusterGalleryFragment", "No photo data available")
             Toast.makeText(requireContext(), "이미지 데이터가 없습니다.", Toast.LENGTH_SHORT).show()
         }
-
-        return view
     }
+
 
     companion object {
         fun newInstance(
