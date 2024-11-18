@@ -29,6 +29,7 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
         binding.btnOriginalGuide.visibility = View.VISIBLE
         binding.btnPersonGuide.visibility = if (hasPerson == true) View.VISIBLE else View.GONE
         binding.btnBackgroundGuide.visibility = View.VISIBLE
+        binding.guideButtons.visibility = View.VISIBLE
     }
 
     fun clearOverlay() {
@@ -42,6 +43,8 @@ class GuideOverlayManager(private val binding: FragmentMainBinding) {
         binding.btnOriginalGuide.visibility = View.GONE
         binding.btnPersonGuide.visibility = View.GONE
         binding.btnBackgroundGuide.visibility = View.GONE
+        binding.settingsOverlay.visibility = View.GONE
+        binding.guideButtons.visibility = View.GONE
     }
 
     fun updateOverlayImages(originalImageUrl: String?, personGuideImageUrl: String?, backgroundGuideImageUrl: String?, showOriginal: Boolean, showPerson: Boolean, showBackground: Boolean) {
