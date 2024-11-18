@@ -35,7 +35,6 @@ def image_to_base64(image):
 
 @app.post("/process_image/")
 async def process_image(file: UploadFile = File(...)):
-    # 업로드된 파일을 메모리에서 읽기
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -45,14 +44,17 @@ async def process_image(file: UploadFile = File(...)):
 
         if person_image is not None:
             # 사람이 감지된 경우
+            # 사람 영역 엣지 - 빨간색 (0, 0, 255)
             person_avg, person_fused = edge_detector.detect_edges(
                 cv2.cvtColor(person_image, cv2.COLOR_RGB2BGR),
-                edge_color=(0, 0, 255)
+                edge_color=(0, 0, 255)  # 빨간색
             )
             person_base64 = image_to_base64(person_fused)
 
+            # 배경 영역 엣지 - 파란색 (255, 0, 0)
             background_avg, background_fused = edge_detector.detect_edges(
-                cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR)
+                cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR),
+                edge_color=(255, 0, 0)  # 파란색
             )
             background_base64 = image_to_base64(background_fused)
 
@@ -63,8 +65,10 @@ async def process_image(file: UploadFile = File(...)):
             )
         else:
             # 사람이 감지되지 않은 경우
+            # 전체 이미지를 배경으로 처리하고 파란색 엣지 적용
             background_avg, background_fused = edge_detector.detect_edges(
-                cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR)
+                cv2.cvtColor(background_image, cv2.COLOR_RGB2BGR),
+                edge_color=(255, 0, 0)  # 파란색
             )
             background_base64 = image_to_base64(background_fused)
 
