@@ -96,9 +96,6 @@ dependencies {
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.0")
     kapt("com.github.bumptech.glide:compiler:4.12.0")
 
-    implementation ("org.pytorch:pytorch_android:2.1.0")
-    implementation ("org.pytorch:pytorch_android_torchvision:2.1.0")
-
     // Retrofit 의존성
     implementation ("com.squareup.retrofit2:retrofit:2.10.0")
     // Moshi Converter 의존성
