@@ -27,42 +27,19 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer
 
 
 class CustomClusterRenderer(
-    private val fragment: Fragment,
     context: Context,
     map: GoogleMap,
     clusterManager: ClusterManager<PhotoClusterItem>
 ) : DefaultClusterRenderer<PhotoClusterItem>(context, map, clusterManager) {
 
     init {
-        clusterManager.setOnClusterClickListener { cluster ->
-            onClusterClicked(cluster)
-            true
-        }
-
-    }
-
-    // 클러스터가 클릭되었을 때 호출되는 함수
-    private fun onClusterClicked(cluster: Cluster<PhotoClusterItem>) {
-        val photoList = cluster.items.map {
-            Pair(it.title, it.getOriginalImageUrl()) // 클러스터 내 각 항목의 ID와 URL로 리스트 생성
-        }
-
-        Log.d("ClusterClicked", "Photo List: $photoList")
-        if (photoList.isNotEmpty()) {
-            // GalleryAdapter 설정 및 Fragment로 이동
-            val galleryAdapter = GalleryAdapter(photoList) { photoId, imageUrl ->
-
-                val bundle = Bundle().apply {
-                    putString("photoId", photoId)
-                    putString("imageUrl", imageUrl)
-                }
-//                fragment.findNavController().navigate(R.id.action_mapFragment_to_guideDetailFragment, bundle)
-            }
-        }
+        setMinClusterSize(2)
     }
 
     // 클러스터 아이템이 렌더링되기 전, 아이템에 대한 커스텀 마커 설정
     override fun onBeforeClusterItemRendered(item: PhotoClusterItem, markerOptions: MarkerOptions) {
+
+        super.onBeforeClusterItemRendered(item, markerOptions)
 
         // 클러스터 아이템이 개별 마커로 렌더링될 때만 이미지 설정
         item.imageBitmap?.let {
@@ -71,6 +48,9 @@ class CustomClusterRenderer(
     }
 
     override fun onBeforeClusterRendered(cluster: Cluster<PhotoClusterItem>, markerOptions: MarkerOptions) {
+
+        super.onBeforeClusterRendered(cluster, markerOptions)
+
         val representativeItem = cluster.items.firstOrNull()
         if (representativeItem?.imageBitmap != null) {
             val clusterIcon = createClusterBitmap(representativeItem.imageBitmap!!, cluster.size)
@@ -80,14 +60,14 @@ class CustomClusterRenderer(
     }
 
     private fun createClusterBitmap(representativeBitmap: Bitmap, clusterSize: Int): Bitmap {
-        val width = 200 // 아이콘 너비
-        val height = 200 // 아이콘 높이
+        val width = 250
+        val height = 250
         val clusterBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(clusterBitmap)
 
         // 대표 이미지를 클러스터 아이콘 크기에 맞게 조정하여 그리기
         val scaledBitmap = Bitmap.createScaledBitmap(representativeBitmap, width, height, false)
-        canvas.drawBitmap(scaledBitmap, 0f, 0f, null)
+        canvas.drawBitmap(scaledBitmap, 0f, 40f, null)
 
         // 텍스트 스타일 설정 (기본 텍스트 크기)
         val paint = Paint().apply {
