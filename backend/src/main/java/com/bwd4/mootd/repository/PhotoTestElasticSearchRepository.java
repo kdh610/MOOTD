@@ -9,6 +9,6 @@ import reactor.core.publisher.Flux;
 
 @Repository
 public interface PhotoTestElasticSearchRepository extends ReactiveElasticsearchRepository<PhotoTestEs,String> {
-    @Query("{\"term\": {\"tag.keyword\": {\"value\": \"?0\"}}}")
+    @Query("{\"term\": {\"tag\": {\"value\": \"?0\"}}}")
     Flux<PhotoTestEs> findByTag(String tag);
 }
