@@ -105,6 +105,13 @@
 | <a href="https://github.com/WiFros"><img src="https://avatars.githubusercontent.com/WiFros" width=160/></a> | <a href="https://github.com/ooo-"><img src="https://avatars.githubusercontent.com/ooo-" width=160/></a> | <a href="https://github.com/Jeongseunghun"><img src="https://avatars.githubusercontent.com/Jeongseunghun" width=160/></a> | 
 |[WiFros](https://github.com/WiFros) | [SangHuPark](https://github.com/SangHuPark) |  [Jeongseunghun](https://github.com/Jeongseunghun) |
 
+### 🖥️ Infra
+
+| 김도훈 | 최재혁 | 박정영 |
+| :---: | :---: | :---: |
+| <a href="https://github.com/vpfl95"><img src="https://avatars.githubusercontent.com/vpfl95" width=160/></a> | <a href="https://github.com/hoiae"><img src="https://avatars.githubusercontent.com/hoiae" width=160/></a> | <a href="https://github.com/WiFros"><img src="https://avatars.githubusercontent.com/WiFros" width=160/></a> |
+|[vpfl95](https://github.com/vpfl95) | [hoiae](https://github.com/hoiae) |[WiFros](https://github.com/WiFros) |
+
 ## ⚒️ 기술 스택
 
 ### 🖥️ Client
