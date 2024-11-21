@@ -102,8 +102,8 @@
 
 | 박정영 | 박경령 | 정승훈 |
 | :---: | :---: | :---: |
-| <a href="https://github.com/WiFros"><img src="https://avatars.githubusercontent.com/WiFros" width=160/></a> | <a href="https://github.com/ooo-"><img src="https://avatars.githubusercontent.com/ooo-" width=160/></a> | <a href="https://github.com/Jeongseunghun"><img src="https://avatars.githubusercontent.com/Jeongseunghun" width=160/></a> | 
-|[WiFros](https://github.com/WiFros) | [SangHuPark](https://github.com/SangHuPark) |  [Jeongseunghun](https://github.com/Jeongseunghun) |
+| <a href="https://github.com/WiFros"><img src="https://avatars.githubusercontent.com/WiFros" width=160/></a> | <a href="https://github.com/Kryoung1215"><img src="https://avatars.githubusercontent.com/Kryoung1215" width=160/></a> | <a href="https://github.com/Jeongseunghun"><img src="https://avatars.githubusercontent.com/Jeongseunghun" width=160/></a> | 
+|[WiFros](https://github.com/WiFros) | [Kryoung1215](https://github.com/Kryoung1215) |  [Jeongseunghun](https://github.com/Jeongseunghun) |
 
 ### 🖥️ Infra
 
