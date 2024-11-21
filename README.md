@@ -137,4 +137,4 @@
 ## 📚 산출물
 |  |  |
 | :--: | ---: |
-| Architecture | <img width="700" src="./etc/asset/Newsseug%20Architecture.png"> |
+| Architecture | <img width="700" src="./asset/architecture.png"> |
