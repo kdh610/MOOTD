@@ -32,17 +32,25 @@ class GuideAdapter(
     override fun onBindViewHolder(holder: GuideViewHolder, position: Int) {
         val photoData = photoList[position]
 
+
         Glide.with(holder.itemView.context)
-            .load(photoData.originalImageUrl) // 썸네일 URL
+            .load(photoData.originalImageUrl)
             .centerCrop()
             .into(holder.imageView)
 
+        val screenWidth = holder.itemView.context.resources.displayMetrics.widthPixels
+        val targetWidth = (screenWidth * 0.35).toInt()
+
 
         holder.imageView.post {
-            val width = holder.imageView.width
             if (layoutId == R.layout.item_guide_image) {
-                holder.imageView.layoutParams.height = (width * 4) / 3 // 4:3 비율 적용
+//                holder.imageView.layoutParams.width = targetWidth
+//                holder.imageView.layoutParams.height = (targetWidth * 4) / 3 // 4:3 비율 적용
+                val recyclerViewHeight = (holder.itemView.parent as RecyclerView).height
+                holder.imageView.layoutParams.height = recyclerViewHeight
+                holder.imageView.layoutParams.width = (recyclerViewHeight * 3) / 4 // 4:3 비율 설정
             } else {
+                val width = holder.imageView.width
                 holder.imageView.layoutParams.height = width // 1:1 비율 적용
             }
         }
