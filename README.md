@@ -97,7 +97,7 @@
 | 김도훈 | 최재혁 | 
 | :---: | :---: |
 | <a href="https://github.com/kdh610"><img src="https://avatars.githubusercontent.com/kdh610" width=160/></a> | <a href="https://github.com/hoiae"><img src="https://avatars.githubusercontent.com/hoiae" width=160/></a> |
-|[vpfl95](https://github.com/vpfl95) | [hoiae](https://github.com/hoiae) 
+|[kdh610](https://github.com/kdh610) | [hoiae](https://github.com/hoiae) 
 ### 🖥️ AI
 
 | 박정영 | 박경령 | 정승훈 |
@@ -110,7 +110,7 @@
 | 김도훈 | 최재혁 | 박정영 |
 | :---: | :---: | :---: |
 | <a href="https://github.com/kdh610"><img src="https://avatars.githubusercontent.com/kdh610" width=160/></a> | <a href="https://github.com/hoiae"><img src="https://avatars.githubusercontent.com/hoiae" width=160/></a> | <a href="https://github.com/WiFros"><img src="https://avatars.githubusercontent.com/WiFros" width=160/></a> |
-|[vpfl95](https://github.com/vpfl95) | [hoiae](https://github.com/hoiae) |[WiFros](https://github.com/WiFros) |
+|[kdh610](https://github.com/kdh610) | [hoiae](https://github.com/hoiae) |[WiFros](https://github.com/WiFros) |
 
 ## ⚒️ 기술 스택
 
