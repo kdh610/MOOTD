@@ -1,14 +1,13 @@
 package com.bwd4.mootd.domain;
 
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
-import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 
 import java.time.LocalDateTime;
@@ -17,7 +16,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(indexName = "mootd-photo")
+@Document(indexName = "mootd.photo")
 public class PhotoEs {
     @Id
     private String id; // MongoDB의 ObjectId가 자동으로 할당됨
@@ -25,13 +24,9 @@ public class PhotoEs {
     @Field(type = FieldType.Text)
     private String deviceId;//기계 아이디
 
-    //private GeoJsonPoint coordinates; // GeoJSON 포인트 타입 사용
-
     @Field(type = FieldType.Text)
     private List<String> tag = new ArrayList<>();//이미지 분석 후 생성되는 태그
 
-
-    //private LocalDateTime createdAt;//촬영시간
 
     private String name;
 
@@ -51,6 +46,10 @@ public class PhotoEs {
 
     private Long usageCount;
 
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second, // 또는 yyyy-MM-dd'T'HH:mm:ss
+            pattern = "yyyy-MM-dd HH:mm:ss", name = "created_at") // 저장된 날짜 형식에 맞춰 지정
+    private LocalDateTime createdAt;
+
     public TagSearchResponseDTO toTagSearchResponseDTO(){
         return TagSearchResponseDTO.builder()
                 .id(this.id)
@@ -59,6 +58,7 @@ public class PhotoEs {
                 .maskImageUrl(this.maskImageUrl)
                 .personGuidelineUrl(this.personGuidelineUrl)
                 .backgroundGuidelineUrl(this.backgroundGuidelineUrl)
+                .createdAt(this.createdAt)
                 .build();
     }
 

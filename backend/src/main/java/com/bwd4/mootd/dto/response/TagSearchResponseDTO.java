@@ -18,4 +18,5 @@ public class TagSearchResponseDTO {
     private String maskImageUrl;
     private String personGuidelineUrl;
     private String backgroundGuidelineUrl;
+    private LocalDateTime createdAt;
 }

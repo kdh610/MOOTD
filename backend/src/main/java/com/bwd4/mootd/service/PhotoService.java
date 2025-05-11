@@ -1,7 +1,5 @@
 package com.bwd4.mootd.service;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
 import com.bwd4.mootd.common.exception.BusinessException;
 import com.bwd4.mootd.common.exception.ErrorCode;
 import com.bwd4.mootd.domain.*;
@@ -12,7 +10,6 @@ import com.bwd4.mootd.dto.response.GuideLineResponseDTO;
 import com.bwd4.mootd.dto.response.MapResponseDTO;
 import com.bwd4.mootd.dto.response.PhotoDetailDTO;
 import com.bwd4.mootd.dto.response.TagSearchResponseDTO;
-import com.bwd4.mootd.dto.response.TagSearchTestDTO;
 import com.bwd4.mootd.enums.ImageType;
 import com.bwd4.mootd.repository.PhotoElasticSearchRepository;
 import com.bwd4.mootd.repository.PhotoRepository;
@@ -26,12 +23,13 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,7 +40,6 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -292,27 +289,24 @@ public class PhotoService {
      * @return
      */
     public Flux<TagSearchResponseDTO> findMongoByTag(String tag) {
-
-        return photoRepository.findByTagContaining(tag)
+        return photoRepository.findByTag(tag)
                 .map(Photo::toTagSearchResponseDTO);
     }
 
     /** MongoDB
-     * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
+     * 태그검색에 따라 최대 size의 수만큼 데이터 반환
      * @param tag
-     * @param limit
      * @return
      */
-    public Flux<TagSearchResponseDTO> findMongoByTagContainingWithLimit(String tag, int limit) {
-        // Create a query to find PhotoTest with the given tag
-        Query query = new Query(Criteria.where("tag").regex(tag));
+    public Mono<Page<TagSearchResponseDTO>> findMongoByTagContainingWithLimit(String tag, Pageable pageable) {
+        Flux<Photo> tagFlux = photoRepository.findByTag(tag, pageable);
+        Mono<Long> countMono = photoRepository.countByTag(tag);
 
-        // Apply limit
-        query.limit(limit);
-
-        // Execute the query with ReactiveMongoTemplate
-        return reactiveMongoTemplate.find(query, Photo.class)
-                .map(Photo::toTagSearchResponseDTO);
+        return tagFlux.map(Photo::toTagSearchResponseDTO)
+                .collectList()
+                .zipWith(countMono,(tags, count) ->
+                        new PageImpl<>(tags, pageable, count)
+                );
     }
 
     /** ElasticSearch
@@ -328,12 +322,18 @@ public class PhotoService {
     /** ElasticSearch
      * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
      * @param tag
-     * @param limit
      * @return
      */
-    public Flux<TagSearchResponseDTO> findEsByTagWithLimit(String tag, int limit) {
-        return photoElasticSearchRepository.findByTag(tag).take(limit)
-                .map(PhotoEs::toTagSearchResponseDTO);
+    public Mono<Page<TagSearchResponseDTO>> findEsByTagWithLimit(String tag, Pageable pageable) {
+        Flux<PhotoEs> tagFlux = photoElasticSearchRepository.findByTag(tag, pageable);
+        Mono<Long> countMono = photoElasticSearchRepository.countByTag(tag);
+
+        return tagFlux
+                .map(PhotoEs::toTagSearchResponseDTO)
+                .collectList()
+                .zipWith(countMono,(tags, count) ->
+                        new PageImpl<>(tags, pageable, count)
+                );
     }
 
 

@@ -99,21 +99,6 @@ public class Photo {
         this.tag = tag;
     }
 
-    // Getters, Setters, Constructors
-
-    /**
-     * Photo를 PhotoDTO로 변환
-     * @return
-     */
-    public PhotoDTO toPhotoDTO(){
-        return PhotoDTO.builder()
-                .id(this.id)
-                .tag(this.tag)
-                .originImageUrl(this.originImageUrl)
-                .guideImageUrl(this.guideImageUrl)
-                .maskImageUrl(this.maskImageUrl)
-                .build();
-    }
 
     /**
      * Photo를 TagSearchResponseDTO로 변환
@@ -127,6 +112,7 @@ public class Photo {
                 .maskImageUrl(this.maskImageUrl)
                 .personGuidelineUrl(this.personGuidelineUrl)
                 .backgroundGuidelineUrl(this.backgroundGuidelineUrl)
+                .createdAt(this.createdAt)
                 .build();
     }
 

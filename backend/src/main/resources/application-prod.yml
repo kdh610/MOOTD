@@ -1,14 +1,14 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://${DB_USERNAME}:${DB_PASSWORD}@${HOST}:27017/mootd?authSource=admin
+      uri: mongodb://root:root@localhost:27018/mootd?authSource=admin
 #      uri: mongodb://${DB_USERNAME}:${DB_PASSWORD}@${HOST}:27018/mootd?authSource=admin
     elasticsearch:
       repositories:
         enabled: true
       username: ${ES_USERNAME}
       password: ${ES_PASSWORD}
-      uris: k11a105.p.ssafy.io:9200
+      uris: localhost:9200
 
   servlet:
     multipart:
@@ -59,3 +59,7 @@ management:
     tags:
       application: ${spring.application.name}
 
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.mongodb.driver.protocol.command: DEBUG
