@@ -14,6 +14,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -91,31 +95,32 @@ public class PhotoController {
     }
 
     /** MongoDB
-     * 태그를 검색에 따라 limit수만큼 반환
+     * 태그를 검색에 따라 size만큼 반환
      * @param tag
      * @return
      */
-    @GetMapping("/mongo/limit/tag")
-    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageMongoByTag(@RequestParam(value = "tag") String tag, @RequestParam(value = "limit")int limit) {
+    @GetMapping("/mongo/tags/{tag}")
+    public Mono<ResponseEntity<ApiResponse<Page<TagSearchResponseDTO>>>> getImageMongoByTag(
+            @PathVariable(value = "tag") String tag,
+            @PageableDefault(size=30, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("tag: {}", tag);
 
-        return photoService.findMongoByTagContainingWithLimit(tag, limit)
-                .collectList()
+        return photoService.findMongoByTagContainingWithLimit(tag, pageable)
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
 
     /** ElasticSearch
-     * 태그검색에 따라 최대 limit의 수만큼 데이터 반환
+     * 태그검색에 따라 최대 size만큼 데이터 반환
      * @param tag
-     * @param limit
      * @return
      */
-    @GetMapping("/es/limit/tag")
-    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageEsByTagLimit(@RequestParam(value = "tag") String tag, @RequestParam(value = "limit")int limit) {
+    @GetMapping("/es/tags/{tag}")
+    public Mono<ResponseEntity<ApiResponse<Page<TagSearchResponseDTO>>>> getImageEsByTag(
+            @PathVariable(value = "tag") String tag,
+            @PageableDefault(size=30, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("tag: {}", tag);
 
-        return photoService.findEsByTagWithLimit(tag, limit)
-                .collectList()
+        return photoService.findEsByTagWithLimit(tag, pageable)
                 .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
     }
 
