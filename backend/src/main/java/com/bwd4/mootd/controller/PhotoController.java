@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -80,34 +79,7 @@ public class PhotoController {
                 .map(list -> ResponseEntity.ok(ApiResponse.success("최근 사용한 이미지 조회 성공", list)));
     }
 
-    /** MongoDB
-     * 태그를 검색하면 태그가 포함된 사진데이터를 응답하는 controller
-     *
-     * @param tag
-     * @returngin
-     */
-    @GetMapping("/mongo/tag")
-    public Mono<ResponseEntity<ApiResponse<List<TagSearchResponseDTO>>>> getImageByTag(@RequestParam(value = "tag") String tag) {
-        log.info("tag: {}", tag);
-        return photoService.findMongoByTag(tag)
-                .collectList()
-                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
-    }
 
-    /** MongoDB
-     * 태그를 검색에 따라 size만큼 반환
-     * @param tag
-     * @return
-     */
-    @GetMapping("/mongo/tags/{tag}")
-    public Mono<ResponseEntity<ApiResponse<Page<TagSearchResponseDTO>>>> getImageMongoByTag(
-            @PathVariable(value = "tag") String tag,
-            @PageableDefault(size=30, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("tag: {}", tag);
-
-        return photoService.findMongoByTagContainingWithLimit(tag, pageable)
-                .map(list -> ResponseEntity.ok(ApiResponse.success("태그 검색 성공", list)));
-    }
 
     /** ElasticSearch
      * 태그검색에 따라 최대 size만큼 데이터 반환

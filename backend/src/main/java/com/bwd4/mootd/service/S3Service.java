@@ -160,7 +160,7 @@ public class S3Service {
                 .flatMap(photoRepository::save);
     }
 
-    String uploadAndGetThumbnailUrl(String imageUrl) throws IOException {
+    public String uploadAndGetThumbnailUrl(String imageUrl) throws IOException {
 
         String imageKey = extractKeyFromUrl(imageUrl);
         // S3에서 원본 이미지 가져오기
